@@ -34,6 +34,7 @@ Board* initGame(int width, int height)
 	/* the snake board */
 	Board *b = (Board *) malloc(sizeof(Board));
 
+	/* set width and height */
 	b->width = width;
 	b->height = height;
 
@@ -65,7 +66,7 @@ Board* initGame(int width, int height)
 	b->food = 0;
 
 	/* add some food */
-	generateFood(b, 1);
+	generateFood(b);
 
 	return b;
 }
@@ -88,6 +89,26 @@ void initNCurses()
 	nodelay(stdscr, true);
 }
 
+void destroyOldBodySegments(Board *b)
+{
+	for (int row=0; row<b->height; row++) {
+		for (int col=0; col<b->width; col++) {
+			/*check if the segment should be removed*/
+			if (b->segments[row][col].type == BODY) {
+
+				/* first decrease the life ticks */
+				b->segments[row][col].lifeTicks -= 10;
+
+				/* then check if the segment should die */
+				if (b->segments[row][col].lifeTicks <= 0) {
+					b->segments[row][col].type = AIR;
+					b->segments[row][col].blocking = false;
+				}
+			} 
+		}
+	}
+}
+
 void drawSnake(Board *b)
 {
 	/* draw the segments */
@@ -97,28 +118,14 @@ void drawSnake(Board *b)
 	}
 
 	for (row=0; row<b->height; row++) {
-		Segment *currentRow = b->segments[row];
-		if (currentRow == NULL) {
+		if (b->segments[row] == NULL) {
 			continue;
 		}
 
 		for (col=0; col<b->width; col++) {
-			/*check if the segment should be removed*/
-			if (currentRow[col].type == BODY) {
-				/* first decrease the life ticks */
-				currentRow[col].lifeTicks -= 10;
-
-				/* then check if the segment is "dead" */
-				if (currentRow[col].lifeTicks <= 0) {
-					currentRow[col].type = AIR;
-					currentRow[col].blocking = false;
-				}
-			}
-
 			/* draw the block */
-			mvaddch(currentRow[col].p.row, 
-				currentRow[col].p.column, 
-				currentRow[col].type);
+			Segment currSeg = b->segments[row][col];
+			mvaddch(currSeg.p.row, currSeg.p.column, currSeg.type);
 		}
 	}
 
@@ -162,26 +169,28 @@ void drawBorder(char character) {
 	}
 }
 
-void generateFood(Board *b, int amount) 
+void generateFood(Board *b)
 {
 	srandom(time(NULL));
-	for (int i=0; i<amount; i++) {
-		bool generating = true;
-		while (generating) {
-			int row = (int) random() % (b->height - 2);
-			int col = (int) random() % (b->width - 2);
-			row++; 
-			col++;
-			Position pos;
-			pos.row = row;
-			pos.column = col;
-			if (positionIsOccupied(pos, b) == false) {
-				Segment s;
-				s.p = pos;
-				s.type = FOOD;
-				b->segments[row][col] = s;
-				break;
-			}
+	bool generating = true;
+	while (generating) {
+		/* get the limits for the border */
+		int row = (int) random() % (b->height - 2);
+		int col = (int) random() % (b->width - 2);
+		row++; 
+		col++;
+
+		/* construct the current position */
+		Position pos;
+		pos.row = row;
+		pos.column = col;
+
+		if (positionIsOccupied(pos, b) == false) {
+			Segment s;
+			s.p = pos;
+			s.type = FOOD;
+			b->segments[row][col] = s;
+			break;
 		}
 	}
 }
@@ -262,69 +271,99 @@ void createBodySegmentAtHeadPosition(Board *b)
 	s.p.row = b->head.p.row;
 	s.p.column = b->head.p.column;
 	s.type = BODY;
-	s.lifeTicks = SEGMENT_LIFE;
+	s.lifeTicks = SegmentLife;
 	s.blocking = true;
 	b->segments[b->head.p.row][b->head.p.column] = s;
 }
 
+void update(Board *b)
+{
+	/* get input from user */
+	updateMovingDirection(b);
+
+	/* update/move the snake */
+	createBodySegmentAtHeadPosition(b);
+	moveSnakeHead(b);
+	destroyOldBodySegments(b);
+}
+
+bool hasPlayerLost(Board *b)
+{
+	/* check if the head has hit something */
+	if (positionIsOccupied(b->head.p, b) == true) {
+		/* there is something at the head */
+		Segment currSeg = b->segments[b->head.p.row]
+			[b->head.p.column];
+
+		if (currSeg.type == FOOD) {
+			/* we found food! */
+			b->food++;
+			generateFood(b);
+
+			/* make the snake longer (by making the 
+			 * segments live longer) */
+			SegmentLife += LifeTicksDecreaseSpeed;
+		} else if (currSeg.blocking == true) {
+			/* there was something blocking, the snake is 
+			 * dead! */
+			lose(b);
+			return true;
+		}
+	}
+
+	if (headIsOutOfBoard(b) == true) {
+		lose(b);
+		return true;
+	}
+
+	return false;
+}
+
+/* return non-zero on error */
+int draw(Board *b)
+{
+	/* clear the screen */
+	if (erase() != OK) {
+		endwin();
+		fprintf(stderr, "Could not clear the window.\n");
+		return 1;
+	}
+
+	/* draw */
+	drawBorder(borderCharacter);
+	drawSnake(b);
+
+	/* the cursor is ugly, move it to bottom-right */
+	move(LINES-1, COLS-1);
+
+	/*finally refresh the window and wait some time*/
+	if (refresh() != OK) {
+		endwin();
+		fprintf(stderr, "Could not redraw the window.\n");
+		return 1;
+	}
+
+	return 0;
+}
 
 int gameLoop(Board *b) 
 {
 	while (true) {
+		/* update the game */
+		update(b);
 
-		/* clear the screen */
-		if (erase() != OK) {
-			endwin();
-			fprintf(stderr, "Could not clear the window.\n");
-			return 1;
-		}
-
-		drawBorder('*');
-
-		drawSnake(b);
-
-		/* the cursor is ugly, move it to bottom-down */
-		move(LINES-1, COLS-1);
-
-		createBodySegmentAtHeadPosition(b);
-
-		moveSnakeHead(b);
-
-		/* check if the head has hit something */
-		if (positionIsOccupied(b->head.p, b) == true) {
-			/* there is something at the head */
-			Segment currSeg = b->segments[b->head.p.row]
-				[b->head.p.column];
-
-			if (currSeg.type == FOOD) {
-				/* we found food! */
-				b->food++;
-				generateFood(b, 1);
-			} else if (currSeg.blocking == true) {
-				/* there was something blocking, the snake is 
-				 * dead! */
-				lose(b);
-				return 0;
-			}
-		}
-
-		if (headIsOutOfBoard(b) == true) {
-			lose(b);
+		if (hasPlayerLost(b) == true) { 
+			/* the player has lost */
+			/* this function also handles the food */
 			return 0;
 		}
-
-		/*finally refresh the window and wait some time*/
-		if (refresh() != OK) {
-			endwin();
-			fprintf(stderr, "Could not redraw the window.\n");
+		
+		if (draw(b) != 0) {
+			/* there was an error */
 			return 1;
 		}
 
-
+		/* wait */
 		usleep(SleepingTime);
-		SleepingTime -= 10;
-
-		updateMovingDirection(b);
-
 	}
 }

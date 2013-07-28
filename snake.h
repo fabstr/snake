@@ -1,14 +1,23 @@
 #ifndef SNAKE_H
 #define SNAKE_H
 
-#define SEGMENT_LIFE 100
+/* the time the loop sleeps between the iterations, micro seconds */
+static int SleepingTime = 100 * 1000;
 
-/* the time the loop sleeps between the iterations */
-static int SleepingTime = 100000;
+/* the number of segments the player starts with */
+static const int StartingSegmentsCount = 4;
+
+/* the time each segment live */
+static int SegmentLife = 10 + 10*StartingSegmentsCount;
+
+/* how many body parts to add times 10 (ie add 1 body part for each food) */
+static int LifeTicksDecreaseSpeed = 10;
+
+static const char borderCharacter = '*';
 
 /* the types a segment can have, and the character the type is rendered as */
-enum SegmentType {HEAD = 'O', BODY = 'x', WALL_HORIZONTAL = '-',
-	WALL_VERTICAL = '|', AIR = ' ', FOOD = '#'};
+enum SegmentType {HEAD = 'X', BODY = '+', WALL_HORIZONTAL = '-',
+	WALL_VERTICAL = '|', AIR = ' ', FOOD = 'O'};
 
 /* the directions the snake can move */
 enum Directions {LEFT, RIGHT, UP, DOWN};
@@ -21,7 +30,6 @@ typedef struct Position {
 	int column;
 	int row;
 } Position;
-
 
 /**
  * A segment is placed on the playing board.
@@ -93,6 +101,12 @@ void drawSnake(Board *b);
 bool positionIsOccupied(Position p, Board *b);
 
 /**
+ * Destroy old body aegments.
+ * @param b The board to destroy from.
+ */
+void destroyOldBodySegments(Board *b);
+
+/**
  * Draw a border.
  * @param character The character to draw the border with.
  */
@@ -105,7 +119,7 @@ void drawBorder(char character);
  * @param b The board to place food on
  * @param amount The number of pieces to generate
  */
-void generateFood(Board *b, int amount);
+void generateFood(Board *b);
 
 /**
  * Quit ncurses, print a message with the score and return 0.
