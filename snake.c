@@ -125,7 +125,10 @@ void drawSnake(Board *b)
 		for (col=0; col<b->width; col++) {
 			/* draw the block */
 			Segment currSeg = b->segments[row][col];
-			mvaddch(currSeg.p.row, currSeg.p.column, currSeg.type);
+			if (currSeg.type != AIR) {
+				mvaddch(currSeg.p.row, currSeg.p.column, 
+					currSeg.type);
+			}
 		}
 	}
 
