@@ -15,6 +15,9 @@ static int LifeTicksDecreaseSpeed = 10;
 
 static const char borderCharacter = '*';
 
+/* true when the game is paused */
+static bool Paused = false;
+
 /* the types a segment can have, and the character the type is rendered as */
 enum SegmentType {HEAD = 'X', BODY = '+', WALL_HORIZONTAL = '-',
 	WALL_VERTICAL = '|', AIR = ' ', FOOD = 'O'};
@@ -144,7 +147,7 @@ void moveSnakeHead(Board *b);
  * Update the moving direction, according to the result of getch().
  * @param b The board to update on.
  */
-void updateMovingDirection(Board *b);
+void getInput(Board *b);
 
 /**
  * Place a body segment at the head's position.

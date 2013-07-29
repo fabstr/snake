@@ -4,6 +4,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "snake.h"
 
@@ -36,7 +37,7 @@ Board* initGame(int width, int height)
 
 	/* set width and height */
 	b->width = width;
-	b->height = height;
+	b->height = height-2;
 
 	/* give the snake's head the head type */
 	b->head.type = HEAD;
@@ -86,7 +87,10 @@ void initNCurses()
 	intrflush(stdscr, FALSE);
 
 	/* prevent blocking on getch() */
-	nodelay(stdscr, true);
+	nodelay(stdscr, TRUE);
+
+	/* enable keypad (and arrow keys) */
+	keypad(stdscr, TRUE);
 }
 
 void destroyOldBodySegments(Board *b)
@@ -133,7 +137,22 @@ void drawSnake(Board *b)
 	}
 
 	/* draw the head */
-	mvaddch(b->head.p.row, b->head.p.column, b->head.type);
+	int headChar;
+	switch (b->direction) {
+		case LEFT:
+			headChar = ACS_LARROW;
+			break;
+		case RIGHT:
+			headChar = ACS_RARROW;
+			break;
+		case UP:
+			headChar = ACS_UARROW;
+			break;
+		case DOWN:
+			headChar = ACS_DARROW;
+			break;
+	}
+	mvaddch(b->head.p.row, b->head.p.column, headChar);
 }
 
 bool positionIsOccupied(Position p, Board *b)
@@ -153,23 +172,36 @@ void drawBorder(char character) {
 
 	/* top */
 	for (r=0,c=0; c<COLS; c++) { 
-		mvaddch(r, c, character);
+		mvaddch(r, c,  ACS_HLINE);
+	}
+
+	/* bottom board */
+	for (r=LINES-3,c=0; c<COLS; c++) { 
+		mvaddch(r, c, ACS_HLINE);
+	}
+
+	/* bottom stats */
+	for (r=LINES-1,c=0; c<COLS; c++) { 
+		mvaddch(r, c, ACS_HLINE);
 	}
 
 	/* left */
 	for (r=0,c=0; r<LINES; r++) { 
-		mvaddch(r, c, character);
-	}
-
-	/* bottom */
-	for (r=LINES-1,c=0; c<COLS; c++) { 
-		mvaddch(r, c, character);
+		mvaddch(r, c, ACS_VLINE);
 	}
 
 	/* right */
 	for (r=0,c=COLS-1; r<LINES; r++) { 
-		mvaddch(r, c, character);
+		mvaddch(r, c, ACS_VLINE);
 	}
+
+	/* fix corners */
+	mvaddch(0, 0, ACS_ULCORNER);
+	mvaddch(0, COLS-1, ACS_URCORNER);
+	mvaddch(LINES-1, 0, ACS_LLCORNER);
+	mvaddch(LINES-1, COLS-1, ACS_LLCORNER);
+	mvaddch(LINES-3, 0, ACS_LTEE);
+	mvaddch(LINES-3, COLS-1, ACS_RTEE);
 }
 
 void generateFood(Board *b)
@@ -211,7 +243,7 @@ bool headIsOutOfBoard(Board *b)
 	/* the head's position */
 	Position hp = b->head.p;
 
-	if (hp.row < 1 || hp.row >= b->height-1 || hp.column <= 1 ||
+	if (hp.row < 1 || hp.row >= b->height-1 || hp.column < 1 ||
 			hp.column >= b->width-1) {
 		return true;
 	}
@@ -237,9 +269,10 @@ void moveSnakeHead(Board *b) {
 	}
 }
 
-void updateMovingDirection(Board *b) {
+void getInput(Board *b) {
 	/* get the new direction */
-	switch (getch()) {
+	int ch = getch();
+	switch (ch) {
 		case 'a': 
 		case KEY_LEFT:
 			if (b->direction != RIGHT) {
@@ -264,6 +297,9 @@ void updateMovingDirection(Board *b) {
 				b->direction = UP;
 			}
 			break;
+		case 'p':
+			Paused = (Paused == true) ? false : true;
+			break;
 	}
 }
 
@@ -281,8 +317,6 @@ void createBodySegmentAtHeadPosition(Board *b)
 
 void update(Board *b)
 {
-	/* get input from user */
-	updateMovingDirection(b);
 
 	/* update/move the snake */
 	createBodySegmentAtHeadPosition(b);
@@ -322,6 +356,37 @@ bool hasPlayerLost(Board *b)
 	return false;
 }
 
+void writeStringToCurses(char *str)
+{
+	for (int i=0; i<strlen(str); i++) {
+		addch(str[i]);
+	}
+}
+
+void drawStats(Board *b)
+{
+	int score = b->food;
+	char *scoreString, *helpString;
+	asprintf(&scoreString, "Score: %10d ", score);
+	asprintf(&helpString, " Pause with p, move with WASD or arrow keys.");
+
+	move(LINES-2, 2);
+	writeStringToCurses(scoreString);
+
+	/* save the current position to write tees */
+	int x, y;
+	getyx(stdscr, y, x);
+
+	/* write separator and tees */
+	addch(ACS_VLINE);
+	mvaddch(y-1, x, ACS_TTEE);
+	mvaddch(y+1, x, ACS_BTEE);
+
+	move(y, x+1);
+	/* write the help string */
+	writeStringToCurses(helpString);
+}
+
 /* return non-zero on error */
 int draw(Board *b)
 {
@@ -335,6 +400,7 @@ int draw(Board *b)
 	/* draw */
 	drawBorder(borderCharacter);
 	drawSnake(b);
+	drawStats(b);
 
 	/* the cursor is ugly, move it to bottom-right */
 	move(LINES-1, COLS-1);
@@ -352,15 +418,20 @@ int draw(Board *b)
 int gameLoop(Board *b) 
 {
 	while (true) {
-		/* update the game */
-		update(b);
+		/* get input from user */
+		getInput(b);
 
-		if (hasPlayerLost(b) == true) { 
-			/* the player has lost */
-			/* this function also handles the food */
-			return 0;
+		if (Paused == false) {
+			/* update the game */
+			update(b);
+
+			if (hasPlayerLost(b) == true) { 
+				/* the player has lost */
+				/* this function also handles the food */
+				return 0;
+			}
 		}
-		
+
 		if (draw(b) != 0) {
 			/* there was an error */
 			return 1;
