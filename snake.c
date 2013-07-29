@@ -16,10 +16,15 @@ int main(int argc, char **argv)
 	if (COLS < 41 || LINES < 6) {
 		endwin();
 		fprintf(stderr, "The terminal window needs to be at least 41");
-		fprintf(stderr, " chars wide and 6 lines high.");
+		fprintf(stderr, " chars wide and 6 lines high.\n");
 		return 1;
 	} 
 	Board *b = initGame(COLS, LINES);
+	if (b == NULL) {
+		endwin();
+		fprintf(stderr, "Could not initialize the board.\n");
+		return 1;
+	}
 
 	/* the game loop */
 	int toReturn = gameLoop(b);
@@ -35,6 +40,26 @@ int main(int argc, char **argv)
 
 	/* pass through the exit status */
 	return toReturn;
+}
+
+HighscoreEntry HighscoreEntryFromString(char *str)
+{
+	HighscoreEntry he;
+
+	/* split the string */
+	char *tmparr[2];
+	char *current;
+	char sep = ' ';
+	int i;
+	while ((current = strsep(&str, &sep)) != NULL) {
+		tmparr[i++] = current;
+	}
+
+	he.score = atoi(tmparr[0]);
+	he.name = (char *) malloc(strlen(tmparr[1])+1);
+	memcpy(he.name, tmparr[1], strlen(tmparr[1])+1);
+
+	return he;
 }
 
 Board* initGame(int width, int height)
@@ -58,9 +83,11 @@ Board* initGame(int width, int height)
 
 	/* initialize the segments array */
 	b->segments = (Segment **) malloc(b->height*sizeof(Segment*));
+
 	for (int i=0; i<b->height; i++) {
 		b->segments[i] = (Segment *) malloc(b->width*sizeof(Segment));
 	}
+
 	for (int row=0; row<b->height; row++) {
 		for (int col=0; col<b->width; col++) {
 			struct timeval t;
@@ -106,7 +133,7 @@ void initNCurses()
 	init_color(COLOR_BLUE, 0, 0, 999);
 	init_pair(TEXT_COLOR_INDEX, COLOR_WHITE, COLOR_BLACK); /* wall/text */
 	init_pair(BODY_COLOR_INDEX, COLOR_BLUE, COLOR_BLACK); /* body */
-	init_pair(FOOD_COLOR_INDEX, COLOR_YELLOW, COLOR_BLACK); /* food */
+	init_pair(FOOD_COLOR_INDEX, COLOR_GREEN, COLOR_BLACK); /* food */
 }
 
 void destroyOldBodySegments(Board *b)
@@ -148,7 +175,7 @@ void drawSnake(Board *b)
 				Segment currSeg = b->segments[row][col];
 
 				/* give the character the correct color */
-				int charToWrite = currSeg.type;
+				int charToWrite = currSeg.drawingCharacter;
 				if (currSeg.type == BODY) {
 					charToWrite |= 
 						COLOR_PAIR(BODY_COLOR_INDEX);
@@ -246,6 +273,7 @@ void generateFood(Board *b)
 			Segment s;
 			s.p = pos;
 			s.type = FOOD;
+			s.drawingCharacter = ACS_DIAMOND;
 			b->segments[row][col] = s;
 			break;
 		}
@@ -292,6 +320,9 @@ void moveSnakeHead(Board *b) {
 }
 
 void getInput(Board *b) {
+	/* save the old direction */
+	b->previousDirection = b->direction;
+
 	/* get the new direction */
 	int ch = getch();
 	switch (ch) {
@@ -337,9 +368,34 @@ void createBodySegmentAtHeadPosition(Board *b)
 	Segment s;
 	s.p.row = b->head.p.row;
 	s.p.column = b->head.p.column;
-	s.type = BODY;
 	s.lifeTicks = SegmentLife;
 	s.blocking = true;
+	s.type = BODY;
+	if (b->direction != b->previousDirection) {
+		/* the snake is changing direction */
+		if (b->previousDirection == RIGHT && b->direction == DOWN) {
+			s.drawingCharacter = ACS_URCORNER;
+		} else if (b->previousDirection == RIGHT && b->direction == UP) {
+			s.drawingCharacter = ACS_LRCORNER;
+		} else if (b->previousDirection == DOWN && b->direction == RIGHT) {
+			s.drawingCharacter = ACS_LLCORNER;
+		} else if (b->previousDirection == DOWN && b->direction == LEFT) {
+			s.drawingCharacter = ACS_LRCORNER;
+		} else if (b->previousDirection == LEFT && b->direction == UP) {
+			s.drawingCharacter = ACS_LLCORNER;
+		} else if (b->previousDirection == LEFT && b->direction == DOWN) {
+			s.drawingCharacter = ACS_ULCORNER;
+		} else if (b->previousDirection == UP && b->direction == LEFT) {
+			s.drawingCharacter = ACS_URCORNER;
+		} else if (b->previousDirection == UP && b->direction == RIGHT) {
+			s.drawingCharacter = ACS_ULCORNER;
+		}
+	} else if (b->direction == UP || b->direction == DOWN) {
+		s.drawingCharacter = ACS_VLINE;
+	} else if (b->direction == LEFT || b->direction == RIGHT) {
+		s.drawingCharacter = ACS_HLINE;
+	}
+
 	b->segments[b->head.p.row][b->head.p.column] = s;
 }
 
@@ -501,9 +557,9 @@ int gameLoop(Board *b)
 			case PLAYING:
 				/* update the game */
 				update(b);
+				/* check if the player has lost, this function
+				 * also handles the food */
 				if (hasPlayerLost(b) == true) {
-					/* the player has lost */
-					/* this function also handles the food */
 					return 0;
 				}
 				break;
@@ -514,7 +570,6 @@ int gameLoop(Board *b)
 				break;
 
 		}
-
 
 		if (draw(b) != 0) {
 			/* there was an error */

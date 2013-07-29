@@ -9,7 +9,7 @@
 static int SleepingTime = 100 * 1000;
 
 /* the number of segments the player starts with */
-static const int StartingSegmentsCount = 10;
+static const int StartingSegmentsCount = 0;
 
 /* the time each segment live */
 static int SegmentLife = 10 + 10*StartingSegmentsCount;
@@ -24,8 +24,7 @@ enum State {PLAYING, PAUSED, HELP, QUIT};
 static enum State GameState = PLAYING;
 
 /* the types a segment can have, and the character the type is rendered as */
-enum SegmentType {HEAD = 'X', BODY = '+', WALL_HORIZONTAL = '-',
-	WALL_VERTICAL = '|', AIR = ' ', FOOD = 'O'};
+enum SegmentType {HEAD, BODY, WALL, AIR, FOOD};
 
 /* the directions the snake can move */
 enum Directions {LEFT, RIGHT, UP, DOWN};
@@ -54,7 +53,15 @@ typedef struct Segment {
 
 	/* if true, the player will lose if hitting this segment */
 	bool blocking;
+
+	int drawingCharacter;
 } Segment;
+
+typedef struct HighscoreEntry {
+	int score;
+	char *name;
+	char *timestamp;
+} HighscoreEntry;
 
 /**
  * The playing board keeps track of the snake, the segments and the food 
@@ -73,12 +80,17 @@ typedef struct Board {
 
 	/* the direction the snake is moving */
 	enum Directions direction;
+	enum Directions previousDirection;
 
 	/* the time each segment lives, in micro seconds */
 	long segmentLivingTime;
 
+	/* the player's score */
 	int food;
+
+	HighscoreEntry highscore[10];
 } Board;
+
 
 /**
  * Initialize the board.
