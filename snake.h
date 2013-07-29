@@ -1,6 +1,10 @@
 #ifndef SNAKE_H
 #define SNAKE_H
 
+#define TEXT_COLOR_INDEX 1
+#define BODY_COLOR_INDEX 2
+#define FOOD_COLOR_INDEX 3
+
 /* the time the loop sleeps between the iterations, micro seconds */
 static int SleepingTime = 100 * 1000;
 

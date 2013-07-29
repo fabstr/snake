@@ -94,6 +94,12 @@ void initNCurses()
 
 	/* enable keypad (and arrow keys) */
 	keypad(stdscr, TRUE);
+
+	/* initialize the colours */
+	init_color(COLOR_BLUE, 0, 0, 999);
+	init_pair(TEXT_COLOR_INDEX, COLOR_WHITE, COLOR_BLACK); /* wall/text */
+	init_pair(BODY_COLOR_INDEX, COLOR_BLUE, COLOR_BLACK); /* body */
+	init_pair(FOOD_COLOR_INDEX, COLOR_YELLOW, COLOR_BLACK); /* food */
 }
 
 void destroyOldBodySegments(Board *b)
@@ -133,8 +139,19 @@ void drawSnake(Board *b)
 			/* draw the block */
 			if (b->segments[row][col].type != AIR) {
 				Segment currSeg = b->segments[row][col];
+
+				/* give the character the correct color */
+				int charToWrite = currSeg.type;
+				if (currSeg.type == BODY) {
+					charToWrite |= 
+						COLOR_PAIR(BODY_COLOR_INDEX);
+				} else if (currSeg.type == FOOD) {
+					charToWrite |= 
+						COLOR_PAIR(FOOD_COLOR_INDEX);
+				}
+
 				mvaddch(currSeg.p.row, currSeg.p.column, 
-					currSeg.type);
+					charToWrite);
 			}
 		}
 	}
@@ -155,7 +172,9 @@ void drawSnake(Board *b)
 			headChar = ACS_DARROW;
 			break;
 	}
-	mvaddch(b->head.p.row, b->head.p.column, headChar);
+
+	mvaddch(b->head.p.row, b->head.p.column, headChar | 
+		COLOR_PAIR(BODY_COLOR_INDEX));
 }
 
 bool positionIsOccupied(Position p, Board *b)
@@ -175,29 +194,29 @@ void drawBorder(int col1, int row1, int col2, int row2) {
 
 	/* top */
 	for (r=row1,c=col1; c<col2; c++) {
-		mvaddch(r, c,  ACS_HLINE);
+		mvaddch(r, c,  ACS_HLINE | COLOR_PAIR(TEXT_COLOR_INDEX));
 	}
 
 	/* bottom */
 	for (r=row2, c=col1; c<col2; c++) {
-		mvaddch(r, c, ACS_HLINE);
+		mvaddch(r, c, ACS_HLINE | COLOR_PAIR(TEXT_COLOR_INDEX));
 	}
 
 	/* left */
 	for (r=row1,c=col1; r<row2; r++) { 
-		mvaddch(r, c, ACS_VLINE);
+		mvaddch(r, c, ACS_VLINE | COLOR_PAIR(TEXT_COLOR_INDEX));
 	}
 
 	/* right */
 	for (r=row1,c=col2; r<row2; r++) { 
-		mvaddch(r, c, ACS_VLINE);
+		mvaddch(r, c, ACS_VLINE | COLOR_PAIR(TEXT_COLOR_INDEX));
 	}
 
 	/* fix corners */
-	mvaddch(row1, col1, ACS_ULCORNER);
-	mvaddch(row1, col2, ACS_URCORNER);
-	mvaddch(row2, col1, ACS_LLCORNER);
-	mvaddch(row2, col2, ACS_LRCORNER);
+	mvaddch(row1, col1, ACS_ULCORNER | COLOR_PAIR(TEXT_COLOR_INDEX));
+	mvaddch(row1, col2, ACS_URCORNER | COLOR_PAIR(TEXT_COLOR_INDEX));
+	mvaddch(row2, col1, ACS_LLCORNER | COLOR_PAIR(TEXT_COLOR_INDEX));
+	mvaddch(row2, col2, ACS_LRCORNER | COLOR_PAIR(TEXT_COLOR_INDEX));
 }
 
 void generateFood(Board *b)
@@ -358,7 +377,7 @@ bool hasPlayerLost(Board *b)
 void writeStringToCurses(char *str)
 {
 	for (int i=0; i<strlen(str); i++) {
-		addch(str[i]);
+		addch(str[i] | COLOR_PAIR(TEXT_COLOR_INDEX));
 	}
 }
 
@@ -377,9 +396,9 @@ void drawStats(Board *b)
 	getyx(stdscr, y, x);
 
 	/* write separator and tees */
-	addch(ACS_VLINE);
-	mvaddch(y-1, x, ACS_TTEE);
-	mvaddch(y+1, x, ACS_BTEE);
+	addch(ACS_VLINE | COLOR_PAIR(TEXT_COLOR_INDEX));
+	mvaddch(y-1, x, ACS_TTEE | COLOR_PAIR(TEXT_COLOR_INDEX));
+	mvaddch(y+1, x, ACS_BTEE | COLOR_PAIR(TEXT_COLOR_INDEX));
 
 	move(y, x+1);
 	/* write the help string */
