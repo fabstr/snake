@@ -381,13 +381,6 @@ bool hasPlayerLost(Board *b)
 	return false;
 }
 
-void writeStringToCurses(char *str)
-{
-	for (int i=0; i<strlen(str); i++) {
-		addch(str[i] | COLOR_PAIR(TEXT_COLOR_INDEX));
-	}
-}
-
 void drawStats(Board *b)
 {
 	int score = b->food;
@@ -395,8 +388,7 @@ void drawStats(Board *b)
 	asprintf(&scoreString, "Score: %10d ", score);
 	asprintf(&helpString, " Press h for help.");
 
-	move(LINES-2, 2);
-	writeStringToCurses(scoreString);
+	mvaddstr(LINES-2, 2, scoreString);
 
 	/* save the current position to write tees */
 	int x, y;
@@ -407,9 +399,8 @@ void drawStats(Board *b)
 	mvaddch(y-1, x, ACS_TTEE | COLOR_PAIR(TEXT_COLOR_INDEX));
 	mvaddch(y+1, x, ACS_BTEE | COLOR_PAIR(TEXT_COLOR_INDEX));
 
-	move(y, x+1);
 	/* write the help string */
-	writeStringToCurses(helpString);
+	mvaddstr(y, x+1, helpString);
 }
 
 void drawTextWindow(char **text, int ncols, int nrows, int xpos, int ypos)
@@ -420,8 +411,7 @@ void drawTextWindow(char **text, int ncols, int nrows, int xpos, int ypos)
 	/* draw the text */
 	for (int i=0; i<nrows; i++) {
 		/* ypos+0 and xpos+0 is the border */
-		move(ypos+1+i, xpos+1);
-		writeStringToCurses(text[i]);
+		mvaddstr(ypos+i+1, xpos+1, text[i]);
 	}
 }
 
@@ -469,8 +459,19 @@ int draw(Board *b)
 	/* draw the snake */
 	drawSnake(b);
 
-	if (GameState == HELP) {
-		drawHelp();
+	char *textarr[2];
+	switch (GameState) {
+		case HELP:
+			drawHelp();
+			break;
+		case PAUSED:
+			textarr[0] = "The game is paused.";
+			textarr[1] = "Press p to continue.";
+			drawTextWindow(textarr, strlen(textarr[1]), 2, 
+					(COLS-strlen(textarr[1])-1)/2, LINES/2-3);
+			break;
+		default:
+			break;
 	}
 
 	/* the cursor is ugly, move it to bottom-right */
