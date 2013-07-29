@@ -77,6 +77,9 @@ void initNCurses()
 	/*init ncurses*/
 	initscr();
 
+	/* use colours */
+	start_color();
+
 	/* get keys as they are pressed */
 	cbreak();
 
@@ -128,8 +131,8 @@ void drawSnake(Board *b)
 
 		for (col=0; col<b->width; col++) {
 			/* draw the block */
-			Segment currSeg = b->segments[row][col];
-			if (currSeg.type != AIR) {
+			if (b->segments[row][col].type != AIR) {
+				Segment currSeg = b->segments[row][col];
 				mvaddch(currSeg.p.row, currSeg.p.column, 
 					currSeg.type);
 			}
@@ -166,42 +169,35 @@ bool positionIsOccupied(Position p, Board *b)
 	return false;
 }
 
-void drawBorder(char character) {
+void drawBorder(int col1, int row1, int col2, int row2) {
 	/* draw a border */
 	int r, c;
 
 	/* top */
-	for (r=0,c=0; c<COLS; c++) { 
+	for (r=row1,c=col1; c<col2; c++) {
 		mvaddch(r, c,  ACS_HLINE);
 	}
 
-	/* bottom board */
-	for (r=LINES-3,c=0; c<COLS; c++) { 
-		mvaddch(r, c, ACS_HLINE);
-	}
-
-	/* bottom stats */
-	for (r=LINES-1,c=0; c<COLS; c++) { 
+	/* bottom */
+	for (r=row2, c=col1; c<col2; c++) {
 		mvaddch(r, c, ACS_HLINE);
 	}
 
 	/* left */
-	for (r=0,c=0; r<LINES; r++) { 
+	for (r=row1,c=col1; r<row2; r++) { 
 		mvaddch(r, c, ACS_VLINE);
 	}
 
 	/* right */
-	for (r=0,c=COLS-1; r<LINES; r++) { 
+	for (r=row1,c=col2; r<row2; r++) { 
 		mvaddch(r, c, ACS_VLINE);
 	}
 
 	/* fix corners */
-	mvaddch(0, 0, ACS_ULCORNER);
-	mvaddch(0, COLS-1, ACS_URCORNER);
-	mvaddch(LINES-1, 0, ACS_LLCORNER);
-	mvaddch(LINES-1, COLS-1, ACS_LLCORNER);
-	mvaddch(LINES-3, 0, ACS_LTEE);
-	mvaddch(LINES-3, COLS-1, ACS_RTEE);
+	mvaddch(row1, col1, ACS_ULCORNER);
+	mvaddch(row1, col2, ACS_URCORNER);
+	mvaddch(row2, col1, ACS_LLCORNER);
+	mvaddch(row2, col2, ACS_LRCORNER);
 }
 
 void generateFood(Board *b)
@@ -298,7 +294,10 @@ void getInput(Board *b) {
 			}
 			break;
 		case 'p':
-			Paused = (Paused == true) ? false : true;
+			GameState = (GameState == PAUSED) ? PLAYING : PAUSED;
+			break;
+		case 'h':
+			GameState = (GameState == HELP) ? PLAYING : HELP;
 			break;
 	}
 }
@@ -368,7 +367,7 @@ void drawStats(Board *b)
 	int score = b->food;
 	char *scoreString, *helpString;
 	asprintf(&scoreString, "Score: %10d ", score);
-	asprintf(&helpString, " Pause with p, move with WASD or arrow keys.");
+	asprintf(&helpString, " Press h for help.");
 
 	move(LINES-2, 2);
 	writeStringToCurses(scoreString);
@@ -387,6 +386,37 @@ void drawStats(Board *b)
 	writeStringToCurses(helpString);
 }
 
+void drawHelp() 
+{
+	/* the length of the longest string */
+	int longestStringLength = strlen("Use the arrow keys or WASD to move.");
+
+	/* move to center of screen */
+	move(LINES/2, COLS/2);
+
+	/* get the coordinates */
+	int x, y;
+	getyx(stdscr, y, x);
+
+	x -= longestStringLength/2;
+
+	/* draw the border */
+	drawBorder(x-1, y-6, x+longestStringLength, y+1);
+
+	move(y-5, x);
+	writeStringToCurses("Press p to pause.");
+	move(y-4, x);
+	writeStringToCurses("Use the arrow keys or WASD to move.");
+	move(y-3, x);
+	writeStringToCurses("Your head looks like this: ");
+	move(y-2, x);
+	writeStringToCurses("Your body: + (don't eat it).");
+	move(y-1, x);
+	writeStringToCurses("Food: O (eat it).");
+	move(y, x);
+	writeStringToCurses("Press h to continue.");
+}
+
 /* return non-zero on error */
 int draw(Board *b)
 {
@@ -397,10 +427,19 @@ int draw(Board *b)
 		return 1;
 	}
 
-	/* draw */
-	drawBorder(borderCharacter);
-	drawSnake(b);
+	/* draw the score window */
+	drawBorder(0, LINES-3, COLS-1, LINES-1);
 	drawStats(b);
+
+	/* draw the border around everything */
+	drawBorder(0, 0, COLS-1, LINES-1);
+
+	/* draw the snake */
+	drawSnake(b);
+
+	if (GameState == HELP) {
+		drawHelp();
+	}
 
 	/* the cursor is ugly, move it to bottom-right */
 	move(LINES-1, COLS-1);
@@ -421,7 +460,8 @@ int gameLoop(Board *b)
 		/* get input from user */
 		getInput(b);
 
-		if (Paused == false) {
+		if (GameState == PLAYING) {
+		/*if (Paused == false) {*/
 			/* update the game */
 			update(b);
 

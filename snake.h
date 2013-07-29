@@ -5,7 +5,7 @@
 static int SleepingTime = 100 * 1000;
 
 /* the number of segments the player starts with */
-static const int StartingSegmentsCount = 4;
+static const int StartingSegmentsCount = 1;
 
 /* the time each segment live */
 static int SegmentLife = 10 + 10*StartingSegmentsCount;
@@ -15,8 +15,9 @@ static int LifeTicksDecreaseSpeed = 10;
 
 static const char borderCharacter = '*';
 
+enum State {PLAYING, PAUSED, HELP};
 /* true when the game is paused */
-static bool Paused = false;
+static enum State GameState = PLAYING;
 
 /* the types a segment can have, and the character the type is rendered as */
 enum SegmentType {HEAD = 'X', BODY = '+', WALL_HORIZONTAL = '-',
@@ -113,7 +114,7 @@ void destroyOldBodySegments(Board *b);
  * Draw a border.
  * @param character The character to draw the border with.
  */
-void drawBorder(char character);
+void drawBorder(int col1, int row1, int col2, int row2);
 
 /**
  * Generate food.
