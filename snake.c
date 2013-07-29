@@ -412,6 +412,19 @@ void drawStats(Board *b)
 	writeStringToCurses(helpString);
 }
 
+void drawTextWindow(char **text, int ncols, int nrows, int xpos, int ypos)
+{
+	/* draw the border */
+	drawBorder(xpos, ypos, xpos+ncols+1, ypos+nrows+1);
+
+	/* draw the text */
+	for (int i=0; i<nrows; i++) {
+		/* ypos+0 and xpos+0 is the border */
+		move(ypos+1+i, xpos+1);
+		writeStringToCurses(text[i]);
+	}
+}
+
 void drawHelp() 
 {
 	/* the length of the longest string */
@@ -424,23 +437,16 @@ void drawHelp()
 	int x, y;
 	getyx(stdscr, y, x);
 
-	x -= longestStringLength/2;
+	x -= longestStringLength/2 + 2;
 
-	/* draw the border */
-	drawBorder(x-1, y-6, x+longestStringLength, y+1);
-
-	move(y-5, x);
-	writeStringToCurses("Press p to pause.");
-	move(y-4, x);
-	writeStringToCurses("Use the arrow keys or WASD to move.");
-	move(y-3, x);
-	writeStringToCurses("Your head looks like this: ");
-	move(y-2, x);
-	writeStringToCurses("Your body: + (don't eat it).");
-	move(y-1, x);
-	writeStringToCurses("Food: O (eat it).");
-	move(y, x);
-	writeStringToCurses("Press h to continue.");
+	char *text[6] = {"Press p to pause.", 
+		"Use the arrow keys or WASD to move.", 
+		"Your head looks like this: ", 
+		"Your body: + (don't eat it).", 
+		"Food: O (eat it).", 
+		"Press h to continue."};
+			
+	drawTextWindow(text, longestStringLength, 6, x, y-6);
 }
 
 /* return non-zero on error */
