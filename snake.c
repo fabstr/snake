@@ -12,6 +12,13 @@ int main(int argc, char **argv)
 {
 	/* initialization */
 	initNCurses();
+
+	if (COLS < 41 || LINES < 6) {
+		endwin();
+		fprintf(stderr, "The terminal window needs to be at least 41");
+		fprintf(stderr, " chars wide and 6 lines high.");
+		return 1;
+	} 
 	Board *b = initGame(COLS, LINES);
 
 	/* the game loop */
