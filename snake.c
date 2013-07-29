@@ -325,6 +325,9 @@ void getInput(Board *b) {
 		case 'h':
 			GameState = (GameState == HELP) ? PLAYING : HELP;
 			break;
+		case 'q':
+			GameState = QUIT;
+			break;
 	}
 }
 
@@ -429,14 +432,15 @@ void drawHelp()
 
 	x -= longestStringLength/2 + 2;
 
-	char *text[6] = {"Press p to pause.", 
+	char *text[7] = {"Press p to pause.", 
 		"Use the arrow keys or WASD to move.", 
 		"Your head looks like this: ", 
 		"Your body: + (don't eat it).", 
 		"Food: O (eat it).", 
+		"Press q to quit.",
 		"Press h to continue."};
 			
-	drawTextWindow(text, longestStringLength, 6, x, y-6);
+	drawTextWindow(text, longestStringLength, 7, x, y-7);
 }
 
 /* return non-zero on error */
@@ -493,17 +497,24 @@ int gameLoop(Board *b)
 		/* get input from user */
 		getInput(b);
 
-		if (GameState == PLAYING) {
-		/*if (Paused == false) {*/
-			/* update the game */
-			update(b);
-
-			if (hasPlayerLost(b) == true) { 
-				/* the player has lost */
-				/* this function also handles the food */
+		switch (GameState) {
+			case PLAYING:
+				/* update the game */
+				update(b);
+				if (hasPlayerLost(b) == true) {
+					/* the player has lost */
+					/* this function also handles the food */
+					return 0;
+				}
+				break;
+			case QUIT:
+				endwin();
 				return 0;
-			}
+			default:
+				break;
+
 		}
+
 
 		if (draw(b) != 0) {
 			/* there was an error */

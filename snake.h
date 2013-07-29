@@ -9,7 +9,7 @@
 static int SleepingTime = 100 * 1000;
 
 /* the number of segments the player starts with */
-static const int StartingSegmentsCount = 1;
+static const int StartingSegmentsCount = 10;
 
 /* the time each segment live */
 static int SegmentLife = 10 + 10*StartingSegmentsCount;
@@ -19,7 +19,7 @@ static int LifeTicksDecreaseSpeed = 10;
 
 static const char borderCharacter = '*';
 
-enum State {PLAYING, PAUSED, HELP};
+enum State {PLAYING, PAUSED, HELP, QUIT};
 /* true when the game is paused */
 static enum State GameState = PLAYING;
 
