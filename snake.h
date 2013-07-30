@@ -1,3 +1,13 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <curses.h>
+#include <time.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <string.h>
+
+#include "highscore.h"
+
 #ifndef SNAKE_H
 #define SNAKE_H
 
@@ -57,11 +67,7 @@ typedef struct Segment {
 	int drawingCharacter;
 } Segment;
 
-typedef struct HighscoreEntry {
-	int score;
-	char *name;
-	char *timestamp;
-} HighscoreEntry;
+
 
 /**
  * The playing board keeps track of the snake, the segments and the food 
@@ -88,7 +94,7 @@ typedef struct Board {
 	/* the player's score */
 	int food;
 
-	HighscoreEntry highscore[10];
+	Record highscore[10];
 } Board;
 
 

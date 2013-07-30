@@ -1,11 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <curses.h>
-#include <time.h>
-#include <sys/time.h>
-#include <unistd.h>
-#include <string.h>
-
 #include "snake.h"
 
 int main(int argc, char **argv) 
@@ -40,26 +32,6 @@ int main(int argc, char **argv)
 
 	/* pass through the exit status */
 	return toReturn;
-}
-
-HighscoreEntry HighscoreEntryFromString(char *str)
-{
-	HighscoreEntry he;
-
-	/* split the string */
-	char *tmparr[2];
-	char *current;
-	char sep = ' ';
-	int i;
-	while ((current = strsep(&str, &sep)) != NULL) {
-		tmparr[i++] = current;
-	}
-
-	he.score = atoi(tmparr[0]);
-	he.name = (char *) malloc(strlen(tmparr[1])+1);
-	memcpy(he.name, tmparr[1], strlen(tmparr[1])+1);
-
-	return he;
 }
 
 Board* initGame(int width, int height)
