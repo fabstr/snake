@@ -1,3 +1,4 @@
+#define _WITH_GETLINE
 #include <stdio.h>
 #include <time.h>
 #include <string.h>

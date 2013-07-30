@@ -65,8 +65,9 @@ int parseLine(char *line, Record *dest)
 	/* allocate memory for the name */
 	dest->playerName = (char *) malloc(64);
 
-	if (sscanf(line, "Score=%d Time=%ld Name=%s\n", &dest->score, 
-				&dest->timestamp, dest->playerName) <= 0) {
+	if (sscanf(line, "Score=%d Time=%ld Name=%64[0-9A-Za-z ]s\n", 
+				&dest->score, &dest->timestamp, 
+				dest->playerName) <= 0) {
 		return 1;
 	}
 

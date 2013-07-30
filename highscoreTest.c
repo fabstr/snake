@@ -24,9 +24,11 @@ void testMetadata()
 	/* check */
 	if (hm.count != 3) {
 		printf("TEST FAILURE: testMetadata, count != 3, is %d\n", 
-			hm.count);
+				hm.count);
 	} else {
-		printf("PASS: testMetadata\n");
+		if (ShowPass == true) {
+			printf("PASS: testMetadata\n");
+		}
 	}
 }
 
@@ -63,7 +65,48 @@ void testRecord()
 		printRecord(&r);
 		printf("\n");
 	} else {
-		printf("PASS: testRecord\n");
+		if (ShowPass == true) {
+			printf("PASS: testRecord\n");
+		}
+	}
+
+	free(line);
+	free(r2.playerName);
+
+}
+
+void testRecordWithSpaces()
+{
+	/* write the record */
+	FILE *f = fopen("highscore-test.txt", "w+b");
+	Record r = {.score=123, .timestamp=123456, 
+		.playerName="name and number"};
+	writeRecord(f, &r);
+	fclose(f);
+
+	/* read the record */
+	FILE *g = fopen("highscore-test.txt", "rb");
+	char *line = NULL;
+	size_t linecap = 0;
+	getline(&line, &linecap, g);
+	fclose(g);
+
+	/* parse the record */
+	Record r2;
+	parseLine(line, &r2);
+
+	if (r2.score != r.score || r2.timestamp != r.timestamp || 
+			strcmp(r2.playerName, r.playerName) != 0) {
+		printf("TEST FAILURE: testRecordWithSpaces, ");
+		printf("records differ: is ");
+		printRecord(&r2);
+		printf(" should be ");
+		printRecord(&r);
+		printf("\n");
+	} else {
+		if (ShowPass == true) {
+			printf("PASS: testRecord\n");
+		}
 	}
 
 	free(line);
@@ -74,14 +117,14 @@ void testRecord()
 bool recordEqual(Record *r1, Record *r2) 
 {
 	return (r1->score == r2->score && r1->timestamp == r2->timestamp &&
-		strcmp(r1->playerName, r2->playerName) == 0) == true;
+			strcmp(r1->playerName, r2->playerName) == 0) == true;
 }
 
 void testHighscoreTable()
 {
 	/* the highscoretable to write */
 	HighscoreTable ht;
-	
+
 	/* create an array of records */
 	Record records[6] = {
 		[0]={.score=1, .timestamp=11, .playerName="1"},
@@ -124,7 +167,9 @@ void testHighscoreTable()
 	}
 
 	if (recordsEqual == true) {
-		printf("PASS: testHighscoreTable\n");
+		if (ShowPass == true) {
+			printf("PASS: testHighscoreTable\n");
+		}
 	}
 
 	freeHighscoreTable(ht2);
@@ -133,7 +178,7 @@ void testHighscoreTable()
 void testAddRecord()
 {
 	HighscoreTable ht;
-	
+
 	ht.records = (Record *) malloc(sizeof(Record)*2);
 	Record r1 = {.score=1, .timestamp=11, .playerName="1"};
 	Record r2 = {.score=2, .timestamp=12, .playerName="2"};
@@ -156,10 +201,12 @@ void testAddRecord()
 			printRecord(&r);
 			printf("\n");
 		} else {
-			printf("PASS: testAddRecord\n");
+			if (ShowPass == true) {
+				printf("PASS: testAddRecord\n");
+			}
 		}
 	}
-	
+
 	free(ht.records);
 }
 
@@ -194,7 +241,9 @@ void testInsertRecord()
 		printRecord(&r2);
 		printf("\n");
 	} else {
-		printf("PASS: testInsertRecord\n");
+		if (ShowPass == true) {
+			printf("PASS: testInsertRecord\n");
+		}
 	}
 
 	free(ht.records);
@@ -202,11 +251,18 @@ void testInsertRecord()
 }
 int main(int argc, char **argv)
 {
+	if (strcmp("--show-passed=yes", argv[1]) == 0) {
+		ShowPass = true;
+	} else {
+		ShowPass = false;
+	}
+
 	testMetadata();
 	testRecord();
 	testHighscoreTable();
 	testAddRecord();
 	testInsertRecord();
+	testRecordWithSpaces();
 
 	return 0;
 }
