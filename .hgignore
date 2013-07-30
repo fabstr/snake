@@ -1,1 +1,10 @@
+syntax: glob
 snake
+*.swp
+*.o
+*.dSYM
+foo
+foo.c
+foo.h
+highscore-test.txt
+highscoreTest
