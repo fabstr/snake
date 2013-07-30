@@ -50,6 +50,9 @@ HighscoreTable *loadHighscoreFromFile(char *file)
 		}
 	}
 
+	ht->p = p;
+	ht->count = metadata.count;
+
 	free(line);
 
 	fclose(f);
@@ -59,8 +62,6 @@ HighscoreTable *loadHighscoreFromFile(char *file)
 
 int parseLine(char *line, Record *dest)
 {
-	int score;
-	long timestamp;
 	/* allocate memory for the name */
 	dest->playerName = (char *) malloc(64);
 
