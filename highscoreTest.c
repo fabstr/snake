@@ -251,10 +251,12 @@ void testInsertRecord()
 }
 int main(int argc, char **argv)
 {
-	if (strcmp("--show-passed=yes", argv[1]) == 0) {
-		ShowPass = true;
-	} else {
-		ShowPass = false;
+	if (argc > 1) {
+		if (strcmp("--show-passed=yes", argv[1]) == 0) {
+			ShowPass = true;
+		} else {
+			ShowPass = false;
+		}
 	}
 
 	testMetadata();
