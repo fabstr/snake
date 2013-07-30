@@ -1,3 +1,4 @@
+#define _WITH_GETLINE
 #include <stdio.h>
 #include <stdlib.h>
 #include <curses.h>
@@ -14,6 +15,7 @@
 #define TEXT_COLOR_INDEX 1
 #define BODY_COLOR_INDEX 2
 #define FOOD_COLOR_INDEX 3
+#define TEXT_INPUT_INDEX 4
 
 /* the time the loop sleeps between the iterations, micro seconds */
 static int SleepingTime = 100 * 1000;
@@ -22,14 +24,14 @@ static int SleepingTime = 100 * 1000;
 static const int StartingSegmentsCount = 0;
 
 /* the time each segment live */
-static int SegmentLife = 10 + 10*StartingSegmentsCount;
+static int SegmentLife = 10;
 
 /* how many body parts to add times 10 (ie add 1 body part for each food) */
 static int LifeTicksDecreaseSpeed = 10;
 
-static const char borderCharacter = '*';
+char* highscorePath = "snakehighscore";
 
-enum State {PLAYING, PAUSED, HELP, QUIT};
+enum State {PLAYING, PAUSED, HELP, QUIT, HIGHSCORE};
 /* true when the game is paused */
 static enum State GameState = PLAYING;
 
@@ -68,7 +70,6 @@ typedef struct Segment {
 } Segment;
 
 
-
 /**
  * The playing board keeps track of the snake, the segments and the food 
  * (score). It also has width and height.
@@ -94,9 +95,14 @@ typedef struct Board {
 	/* the player's score */
 	int food;
 
-	Record highscore[10];
+	HighscoreTable *highscore;
 } Board;
 
+/**
+ * A logging function.
+ * @param msg The string to log.
+ */
+void mlog(char *msg);
 
 /**
  * Initialize the board.
@@ -183,5 +189,17 @@ void createBodySegmentAtHeadPosition(Board *b);
  * @param b The board of the current game.
  */
 int gameLoop(Board *b);
+
+void destroyOldBodySegments(Board *b);
+void drawBorder(int col1, int row1, int col2, int row2);
+void update(Board *b);
+bool hasPlayerLost(Board *b);
+void drawStats(Board *b);
+void drawTextWindowInMiddle(char **text, int nrows);
+void drawHighscore(Board *b);
+void drawHelp();
+int draw(Board *b);
+void resetGame(Board *b);
+int getTextInput(char *msg, char *dest, size_t bufflen);
 
 #endif

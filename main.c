@@ -1,4 +1,4 @@
-#include "snake.h"
+#include "main.h"
 
 int main(int argc, char **argv) 
 {
@@ -21,6 +21,9 @@ int main(int argc, char **argv)
 	/* the game loop */
 	int toReturn = gameLoop(b);
 
+	/* update highscore file */
+	writeHighscoreToFile(highscorePath, b->highscore);
+
 	/* memory deallocation */
 	for (int row=0; row<b->height; row++) {
 		if (b->segments[row] != NULL) {
@@ -28,13 +31,29 @@ int main(int argc, char **argv)
 		}
 	}
 	free(b->segments);
+	freeHighscoreTable(b->highscore);
 	free(b);
 
 	/* pass through the exit status */
 	return toReturn;
 }
 
+void mlog(char *msg)
+{
+	FILE *f = fopen("snake.log", "a+b");
+	
+	/* get the current timestamp and remove the newline */
+	time_t currTime = time(NULL);
+	char *timeString = ctime(&currTime);
+	timeString[24] = '\0';
+
+	/* print the message and close the file */
+	fprintf(f, "%s: %s\n", timeString, msg);
+	fclose(f);
+}
+
 Board* initGame(int width, int height)
+
 {
 	/* the snake board */
 	Board *b = (Board *) malloc(sizeof(Board));
@@ -46,34 +65,23 @@ Board* initGame(int width, int height)
 	/* give the snake's head the head type */
 	b->head.type = HEAD;
 
-	/* start moving upwards */
-	b->direction = UP;
-
-	/* set a starting position */
-	b->head.p.row = height/2;
-	b->head.p.column = width/2;
-
 	/* initialize the segments array */
 	b->segments = (Segment **) malloc(b->height*sizeof(Segment*));
 
+	/* initialize the segments array */
 	for (int i=0; i<b->height; i++) {
 		b->segments[i] = (Segment *) malloc(b->width*sizeof(Segment));
 	}
 
-	for (int row=0; row<b->height; row++) {
-		for (int col=0; col<b->width; col++) {
-			struct timeval t;
-			gettimeofday(&t, NULL);
-			Segment s = {{row, col}, AIR, -1, false};
-			b->segments[row][col] = s;
-		}
+	/* load highscore */
+	if ((b->highscore = loadHighscoreFromFile(highscorePath)) == NULL) {
+		endwin();
+		printf("highscore not loaded");
+		return NULL;
 	}
 
-	/* we start with 0 food */
-	b->food = 0;
-
-	/* add some food */
-	generateFood(b);
+	/* use the reset function to init the rest */
+	resetGame(b);
 
 	return b;
 }
@@ -101,11 +109,15 @@ void initNCurses()
 	/* enable keypad (and arrow keys) */
 	keypad(stdscr, TRUE);
 
+	/* hide the cursor */
+	curs_set(0);
+
 	/* initialize the colours */
 	init_color(COLOR_BLUE, 0, 0, 999);
 	init_pair(TEXT_COLOR_INDEX, COLOR_WHITE, COLOR_BLACK); /* wall/text */
 	init_pair(BODY_COLOR_INDEX, COLOR_BLUE, COLOR_BLACK); /* body */
 	init_pair(FOOD_COLOR_INDEX, COLOR_GREEN, COLOR_BLACK); /* food */
+	init_pair(TEXT_INPUT_INDEX, COLOR_BLACK, COLOR_WHITE); /* text input */
 }
 
 void destroyOldBodySegments(Board *b)
@@ -116,7 +128,8 @@ void destroyOldBodySegments(Board *b)
 			if (b->segments[row][col].type == BODY) {
 
 				/* first decrease the life ticks */
-				b->segments[row][col].lifeTicks -= 10;
+				b->segments[row][col].lifeTicks 
+					-= LifeTicksDecreaseSpeed;
 
 				/* then check if the segment should die */
 				if (b->segments[row][col].lifeTicks <= 0) {
@@ -194,7 +207,8 @@ bool positionIsOccupied(Position p, Board *b)
 	return false;
 }
 
-void drawBorder(int col1, int row1, int col2, int row2) {
+void drawBorder(int col1, int row1, int col2, int row2)
+{
 	/* draw a border */
 	int r, c;
 
@@ -252,12 +266,72 @@ void generateFood(Board *b)
 	}
 }
 
+int getTextInput(char *msg, char *dest, size_t bufflen) 
+{
+	/* quit ncurses */
+	endwin();
+
+	/* show the message */
+	printf("%s", msg);
+	fflush(stdout);
+
+	/* get the input */
+	int toReturn = getline(&dest, &bufflen, stdin);
+
+	/* trim the newline */
+	dest[strlen(dest)-1] = '\0';
+	
+	/* start ncurses again */
+	refresh();
+
+	/* return something */
+	if (toReturn <= 0) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
 void lose(Board *b) 
 {
-	sleep(1);
-	endwin();
-	printf("You lost with %d %s.\n", b->food, 
-			(b->food == 1) ? "point" : "points");
+	/* get the lowest score, the last one in the records array */
+	int lowestScore = b->highscore->records[b->highscore->count-1].score;
+
+	if (lowestScore < b->food) {
+		/* get the name */
+		char **text = (char **) malloc(3*sizeof(char **));
+		text[0] = "                    YOU LOST!                 ";
+		text[1] = "Please enter your name for the highscore list.";
+		text[2] = "           Press space to continue.           ";
+
+		drawTextWindowInMiddle(text, 3);
+		refresh();
+
+		char c;
+		while ((c = getch()) != ' ') {
+			usleep(10000);
+		}
+
+		/* get the user's name */
+		char *name = (char *) malloc(64);
+		if (getTextInput("What's your name? ", name, 64) != 0) {
+			GameState = QUIT;
+		}
+		mlog("got line:");
+		mlog(name);
+
+		/* the player has beaten someone, add the player to the 
+		 * highscore list */
+		Record r = {.score = b->food, .timestamp = (long) time(NULL), 
+			.playerName=name};
+		insertRecordAndSort(&r, b->highscore);
+		GameState = HIGHSCORE;
+	} else {
+
+	}
+
+
+	resetGame(b);
 }
 
 bool headIsOutOfBoard(Board *b)
@@ -331,6 +405,10 @@ void getInput(Board *b) {
 		case 'q':
 			GameState = QUIT;
 			break;
+		case 't':
+			GameState = (GameState == HIGHSCORE) ?
+				PLAYING : HIGHSCORE;
+			break;
 	}
 }
 
@@ -399,17 +477,41 @@ bool hasPlayerLost(Board *b)
 		} else if (currSeg.blocking == true) {
 			/* there was something blocking, the snake is 
 			 * dead! */
-			lose(b);
 			return true;
 		}
 	}
 
 	if (headIsOutOfBoard(b) == true) {
-		lose(b);
 		return true;
 	}
 
 	return false;
+}
+
+void resetGame(Board *b)
+{
+	/* place the head at the middle */
+	b->head.p.row = b->height/2;
+	b->head.p.column = b->width/2;
+
+	/* set movind direction */
+	b->direction = UP;
+
+	/* replace the segments array with air segments */
+	for (int row=0; row<b->height; row++) {
+		for (int col=0; col<b->width; col++) {
+			struct timeval t;
+			gettimeofday(&t, NULL);
+			Segment s = {{row, col}, AIR, -1, false};
+			b->segments[row][col] = s;
+		}
+	}
+
+	/* reset the food */
+	b->food = 0;
+
+	/* add some food */
+	generateFood(b);
 }
 
 void drawStats(Board *b)
@@ -432,17 +534,69 @@ void drawStats(Board *b)
 
 	/* write the help string */
 	mvaddstr(y, x+1, helpString);
+
+	free(scoreString);
+	free(helpString);
 }
 
-void drawTextWindow(char **text, int ncols, int nrows, int xpos, int ypos)
+
+void drawTextWindowInMiddle(char **text, int nrows)
 {
+	/* find the longest string */
+	int longestLength = strlen(text[0]);
+	int len = 0;
+	for (int i=0; i<nrows; i++) {
+		if ((len = strlen(text[i])) > longestLength) {
+			longestLength = len;
+		}
+	}
+
+	int xpos = COLS/2 - longestLength/2 - 1;
+	int ypos = LINES/2 - nrows/2;
+
 	/* draw the border */
-	drawBorder(xpos, ypos, xpos+ncols+1, ypos+nrows+1);
+	drawBorder(xpos, ypos, xpos+longestLength+1, ypos+nrows+1);
 
 	/* draw the text */
 	for (int i=0; i<nrows; i++) {
 		/* ypos+0 and xpos+0 is the border */
 		mvaddstr(ypos+i+1, xpos+1, text[i]);
+	}
+}
+
+void drawHighscore(Board *b)
+{
+	/* move to center of screen */
+	move(LINES/2, COLS/2);
+
+	/* get the coordinates */
+	int x, y;
+	getyx(stdscr, y, x);
+
+	/* the number of lines to draw */
+	int nlines = nlines = b->highscore->count+1;
+	if (nlines > 11) {
+		nlines = 11;
+	}
+
+	/* make the array for printing */
+	char **text = (char **) malloc(nlines*sizeof(char **));
+	text[0] = "Top 10 (press t to continue):";
+
+	for (int i=0; i<b->highscore->count && i < 10; i++) {
+		Record currRec = b->highscore->records[i];
+
+		/* in the text array we begin at index 1 */
+		asprintf(&text[i+1], "%5d %s", currRec.score, 
+				currRec.playerName);
+	}
+
+	/* draw the text */
+	drawTextWindowInMiddle(text, nlines);
+
+	/* free the strings */
+	for (int i=1; i<nlines; i++) {
+		free(text[i]);
 	}
 }
 
@@ -457,18 +611,18 @@ void drawHelp()
 	/* get the coordinates */
 	int x, y;
 	getyx(stdscr, y, x);
-
 	x -= longestStringLength/2 + 2;
 
-	char *text[7] = {"Press p to pause.", 
+	char *text[8] = {"Press p to pause.", 
 		"Use the arrow keys or WASD to move.", 
 		"Your head looks like this: ", 
 		"Your body: + (don't eat it).", 
 		"Food: O (eat it).", 
 		"Press q to quit.",
+		"Press t to show highscore.",
 		"Press h to continue."};
 			
-	drawTextWindow(text, longestStringLength, 7, x, y-7);
+	drawTextWindowInMiddle(text, 8);
 }
 
 /* return non-zero on error */
@@ -496,18 +650,18 @@ int draw(Board *b)
 		case HELP:
 			drawHelp();
 			break;
+		case HIGHSCORE:
+			drawHighscore(b);
+			break;
 		case PAUSED:
 			textarr[0] = "The game is paused.";
 			textarr[1] = "Press p to continue.";
-			drawTextWindow(textarr, strlen(textarr[1]), 2, 
-					(COLS-strlen(textarr[1])-1)/2, LINES/2-3);
+			drawTextWindowInMiddle(textarr, 2);
 			break;
-		default:
+		case PLAYING: 
+		case QUIT:
 			break;
 	}
-
-	/* the cursor is ugly, move it to bottom-right */
-	move(LINES-1, COLS-1);
 
 	/*finally refresh the window and wait some time*/
 	if (refresh() != OK) {
@@ -532,7 +686,7 @@ int gameLoop(Board *b)
 				/* check if the player has lost, this function
 				 * also handles the food */
 				if (hasPlayerLost(b) == true) {
-					return 0;
+					lose(b);
 				}
 				break;
 			case QUIT:
