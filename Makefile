@@ -1,6 +1,9 @@
 # the flags for the compiler
 CFLAGS= -g -O0 -Wall
 
+# the flags for valgrind
+VALGRINDFLAGS= --leak-check=full --log-file=valgrind.log --track-origins=yes
+
 # the libraries used
 LDLIBS= -lncurses
 
@@ -14,12 +17,14 @@ OBJECTS= highscore.o snake.o
 BIN= snake
 
 # the test files to clean
-TESTCLEAN= highscoreTest highscoreTest.o highscore-test.txt 
+TESTCLEAN= highscoreTest highscoreTest.o highscore-test.txt highscoreTest.dSYM valgrind.log
 
 # other files to remove whilst cleaning
-OTHERCLEANING= .dSYM 
+OTHERCLEANING= snake.log
 
-all: $(OBJECTS)
+all: snake
+
+snake: $(OBJECTS)
 	$(CC) $(CFLAGS) $(LDLIBS) -o $(BIN) $(OBJECTS)
 
 %.o : %.c %.h
@@ -34,8 +39,14 @@ clean:
 highscoreTest: highscore.o highscoreTest.o
 	$(CC) $(CFLAGS) $(LDLIBS) highscoreTest.o highscore.o -o highscoreTest
 
-test: highscoreTest
+test: clean highscoreTest 
 	./highscoreTest
 
-test-valgrind: highscoreTest highscoreTest.dSYM
-	valgrind highscoreTest
+test-valgrind: clean highscoreTest.dSYM
+	valgrind $(VALGRINDFLAGS) highscoreTest
+
+run: all
+	./snake
+
+run-valgrind: clean snake.dSYM
+	valgrind $(VALGRINDFLAGS) snake

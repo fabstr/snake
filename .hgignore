@@ -8,3 +8,5 @@ foo.c
 foo.h
 highscore-test.txt
 highscoreTest
+snakehighscore
+valgrind.log
