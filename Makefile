@@ -14,7 +14,7 @@ LDLIBS= -lncurses
 CC= clang
 
 # the objects to be compiled
-OBJECTS= highscore.o snake.o
+OBJECTS= highscore.o main.o
 
 # the binary output
 BIN= snake
@@ -25,9 +25,7 @@ TESTCLEAN= highscoreTest highscoreTest.o highscore-test.txt highscoreTest.dSYM v
 # other files to remove whilst cleaning
 OTHERCLEANING= snake.log
 
-all: snake
-
-snake: $(OBJECTS)
+all: $(OBJECTS)
 	$(CC) $(CFLAGS) $(LDLIBS) -o $(BIN) $(OBJECTS)
 
 %.o : %.c %.h
