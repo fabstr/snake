@@ -19,6 +19,7 @@ void testMetadata()
 	/* parse */
 	HighscoreMetadata hm;
 	readMetadata(line, &hm);
+	free(line);
 
 	/* check */
 	if (hm.count != 3) {
@@ -64,6 +65,9 @@ void testRecord()
 	} else {
 		printf("PASS: testRecord\n");
 	}
+
+	free(line);
+	free(r2.playerName);
 
 }
 

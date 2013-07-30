@@ -45,9 +45,12 @@ HighscoreTable *loadHighscoreFromFile(char *file)
 		
 		/* parse the current entry into the array */
 		if (parseLine(line, currRecord) != 0) {
+			freeHighscoreTable(ht);
 			return NULL;
 		}
 	}
+
+	free(line);
 
 	fclose(f);
 
@@ -58,19 +61,13 @@ int parseLine(char *line, Record *dest)
 {
 	int score;
 	long timestamp;
-	char *name = (char *) malloc(64);
-	if (name == NULL) {
+	/* allocate memory for the name */
+	dest->playerName = (char *) malloc(64);
+
+	if (sscanf(line, "Score=%d Time=%ld Name=%s\n", &dest->score, 
+				&dest->timestamp, dest->playerName) <= 0) {
 		return 1;
 	}
-
-	if (sscanf(line, "Score=%d Time=%ld Name=%s\n", &score, &timestamp, 
-				name) <= 0) {
-		return 1;
-	}
-
-	dest->score = score;
-	dest->timestamp = (time_t) timestamp;
-	dest->playerName = name;
 
 	return 0;
 }
@@ -85,12 +82,24 @@ int writeMetadata(FILE *f, HighscoreTable *ht)
 	}
 }
 
+char *getRecordLine(Record *r)
+{
+	char *line;
+	if (asprintf(&line, "Score=%d Time=%ld Name=%s", r->score, 
+				r->timestamp, r->playerName) == -1) {
+		return NULL;
+	}
+
+	return line;
+}
+
 int writeRecord(FILE *f, Record *r)
 {
-	if (fprintf(f, "Score=%d Time=%ld Name=%s\n", r->score, r->timestamp, 
-			r->playerName) > 0) {
+	char *line = getRecordLine(r);
+	if (fprintf(f, "%s\n", line) < 0) {
 		return 0;
 	} else {
+		free(line);
 		return 1;
 	}
 }
@@ -117,6 +126,9 @@ int writeHighscoreToFile(char *file, HighscoreTable *ht)
 }
 
 void freeHighscoreTable(HighscoreTable *ht) {
+	for (int i=0; i<ht->count; i++) {
+		free(ht->records[i].playerName);
+	}
 	free(ht->records);
 	free(ht);
 }

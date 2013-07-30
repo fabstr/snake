@@ -23,7 +23,7 @@ typedef struct HighscoreMetadata {
 } HighscoreMetadata;
 
 int readMetadata(char *line, HighscoreMetadata *metadata);
-HighscoreTable *loadHighscoreFromFile(char *file);
+HighscoreTable* loadHighscoreFromFile(char *file);
 int parseLine(char *line, Record *dest);
 int writeMetadata(FILE *f, HighscoreTable *ht);
 int writeRecord(FILE *f, Record *r);
