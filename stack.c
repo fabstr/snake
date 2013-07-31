@@ -2,23 +2,30 @@
 
 int push(Stack *s, void *e)
 {
-	if (s->currPos >= s->size - 1) {
-		/* we need to expand the stack */
+	/* check if we need to expand the stack */
+	if (s->currPos == s->size - 1) {
 		if (expand(s) != 0) {
 			return 1;
 		}
 	}
 
-	/* add to the stack */
-	s->elements[++s->currPos] = e;
+	/* move to the next index */
+	s->currPos++;
+
+	/* add the element */
+	s->elements[s->currPos] = e;
 
 	return 0;
 }
 
 void* pop(Stack *s)
 {
+	/* get the element */
 	void *toReturn = top(s);
+
+	/* update currPos */
 	s->currPos--;
+
 	return toReturn;
 }
 
@@ -56,7 +63,7 @@ Stack* newStack()
 		return NULL;
 	}
 
-	s->size =INITIALSTACKSIZE;
+	s->size = INITIALSTACKSIZE;
 	s->currPos = -1;
 
 	return s;
@@ -66,4 +73,22 @@ void freeStack(Stack *s)
 {
 	free(s->elements);
 	free(s);
+}
+
+void loopStack(Stack *s, void (*f)(void *))
+{
+	/* loop over the elements */
+	for (int i=0; i<s->currPos+1; i++) {
+		/* call the function */
+		f(s->elements[i]);
+	}
+}
+
+void* get(Stack *s, int i)
+{
+	if (i > s->currPos+1 || i < 0) {
+		return NULL;
+	} else {
+		return s->elements[i];
+	}
 }

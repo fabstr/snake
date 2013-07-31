@@ -1,5 +1,10 @@
 #include "stackTest.h"
 
+void printTestStruct(testStruct *ts)
+{
+	printf("{.string='%s'}\n", ts->string);
+}
+
 void testNewStack()
 {
 	Stack *s = newStack();
@@ -7,7 +12,7 @@ void testNewStack()
 	if (s->size != 10) {
 		printf("TEST FAILURE: testNewStack, size not 10\n");
 	} else if (s->currPos != -1) {
-		printf("TEST FAILURE: testNewStack, currPos not -1\n");
+		printf("TEST FAILURE: testNewStack, currPos not NULL\n");
 	} else {
 		if (ShowPass == true) {
 			printf("PASS: testNewStack\n");
@@ -30,9 +35,6 @@ void testTop()
 
 	if (x != *y) {
 		printf("TEST FAILURE: testTop, x = %d != %d\n", x, *y);
-	} else if (s->currPos != 0) {
-		printf("TEST FAILURE: testTop, currPos != 0, is %d\n", 
-				s->currPos);
 	} else {
 		if (ShowPass == true) {
 			printf("PASS: testTop\n");
@@ -58,7 +60,7 @@ void testPushAndPop()
 	if (x != *y) {
 		printf("TEST FAILURE: testPushAndPop, x = %d != %d\n", x, *y);
 	} else if (s->currPos != -1) {
-		printf("TEST FAILURE: testPushAndPop, currPos != -1, is %d\n", 
+		printf("TEST FAILURE: testPushAndPop, currPos != 0, is %d\n", 
 				s->currPos);
 	} else {
 		if (ShowPass == true) {
@@ -114,10 +116,10 @@ void testExpand()
 	}
 
 	if (failure == true) {
-		printf("TEST FAILURE: testPushPopMany, array failure\n");
+		printf("TEST FAILURE: testExpand, array failure\n");
 	} else {
 		if (ShowPass == true) {
-			printf("PASS: testPushPopMany\n");
+			printf("PASS: testExpand\n");
 		}
 	}
 
@@ -133,6 +135,44 @@ void testInitialStackSize()
 			printf("PASS: testInitialStackSize\n");
 		}
 	}
+}
+
+void loopTestFunction(void *e)
+{
+	testStruct *lts = (testStruct *) e;
+	lts->string = "touched";
+}
+
+void testLoopStack()
+{
+	Stack *s = newStack();
+	testStruct arr[4] = {[0]={.string="zero"}, [1]={.string="one"},
+		[2]={.string="two"}, [3]={.string="three"}};
+
+	push(s, &arr[3]);
+	push(s, &arr[2]);
+	push(s, &arr[1]);
+	push(s, &arr[0]);
+
+	loopStack(s, loopTestFunction);
+
+	bool passed = true;
+	for (int i=0; i<4; i++) {
+		testStruct *e1 = (testStruct *) s->elements[i];
+		if (strcmp(e1->string, "touched") != 0) {
+			passed = false;
+		}
+	}
+
+	if (passed == false) {
+		printf("TEST FAILURE: testLoopStack\n");
+	} else {
+		if (ShowPass == true) {
+			printf("PASS: testLoopStack\n");
+		}
+	}
+
+	freeStack(s);
 }
 
 int main(int argc, char **argv)
@@ -151,6 +191,7 @@ int main(int argc, char **argv)
 	testPushPopMany();
 	testExpand();
 	testInitialStackSize();
+	testLoopStack();
 
 	return 0;
 }

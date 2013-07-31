@@ -9,6 +9,11 @@
 
 static bool ShowPass = false;
 
+typedef struct testStruct {
+	char *string;
+} testStruct;
+void printTestStruct(testStruct *ts);
+
 void testNewStack();
 void testPushAndPop();
 void testPushPopMany();
