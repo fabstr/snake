@@ -2,6 +2,9 @@
 
 int main(int argc, char **argv) 
 {
+	/* for when the window is resized */
+	/*signal(SIGWINCH, resizeBoard);*/
+
 	/* initialization */
 	initNCurses();
 
@@ -33,15 +36,25 @@ int main(int argc, char **argv)
 	return toReturn;
 }
 
+/*void resizeBoard(int i)*/
+/*{*/
+	/*windowIsResized = true;*/
+/*}*/
+
+void setBoardWidthHeight(Board *b, int windowCols, int windowRows)
+{
+	/* set width and height */
+	b->width = windowCols;
+	b->height = windowRows;
+}
+
 Board* initGame(int width, int height)
 
 {
 	/* the snake board */
 	Board *b = (Board *) malloc(sizeof(Board));
 
-	/* set width and height */
-	b->width = width;
-	b->height = height-2;
+	setBoardWidthHeight(b, COLS, LINES-2);
 
 	/* load highscore */
 	if ((b->highscore = loadHighscoreFromFile(highscorePath)) == NULL) {
@@ -488,6 +501,12 @@ int draw(Board *b)
 int gameLoop(Board *b) 
 {
 	while (true) {
+		/* check if the window is resized */
+		/*if (windowIsResized == true) {*/
+			/*windowIsResized = false;*/
+			/*setBoardWidthHeight(b, COLS, LINES-2);*/
+		/*}*/
+
 		/* get input from user */
 		getInput(b);
 
