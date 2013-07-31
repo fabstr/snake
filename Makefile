@@ -5,7 +5,7 @@ CFLAGS= -g -O0 -Wall
 VALGRINDFLAGS= --leak-check=full --log-file=valgrind.log --track-origins=yes 
 
 # the flags for the testing
-TESTFLAGS= --show-passed=no
+TESTFLAGS= --show-passed=yes
 
 # the libraries used
 LDLIBS= -lncurses
@@ -14,19 +14,38 @@ LDLIBS= -lncurses
 CC= clang
 
 # the objects to be compiled
-OBJECTS= highscore.o main.o
+UTILITIES= stack.o position.o mlog.o
+OBJECTS= highscore.o main.o snake.o segment.o colors.o $(UTILITIES)
+TESTOBJECTS= highscoreTest.o stackTest.o
 
 # the binary output
 BIN= snake
+TESTBINS= highscoreTest stackTest
+
+# to run the tests
+TESTRUNS= $(TESTBINS:Test=TestRun)
+TESTRUNVALGRIND= $(TESTBINS:Test=TestRunValgrind)
+TESTDSYMS= $(TESTOBJECTS:.o=.dSYM)
+DSYMS= $(OBJECTS:.o=.dSYM)
 
 # the test files to clean
-TESTCLEAN= highscoreTest highscoreTest.o highscore-test.txt highscoreTest.dSYM valgrind.log *.dSYM
+TESTCLEAN= $(TESTOBJECTS) $(TESTBINS) $(TESTDSYMS) highscore-test.txt valgrind.log 
 
 # other files to remove whilst cleaning
-OTHERCLEANING= snake.log
+OTHERCLEANING= snake.log snake.dSYM
 
-all: $(OBJECTS)
+snake: $(OBJECTS)
 	$(CC) $(CFLAGS) $(LDLIBS) -o $(BIN) $(OBJECTS)
+
+test: $(TESTRUNS)
+
+testValgrind: $(TESTRUNVALGRIND)
+
+run: snake
+	./snake
+
+run-valgrind: snake.dSYM
+	valgrind $(VALGRINDFLAGS) snake 
 
 %.o : %.c %.h
 	$(CC) $(CFLAGS) -c $*.c -o $*.o
@@ -39,17 +58,23 @@ clean:
 	rm -rf $(OTHERCLEANING) 
 	rm -rf $(TESTCLEAN)
 
-highscoreTest: highscore.o highscoreTest.o
-	$(CC) $(CFLAGS) $(LDLIBS) highscoreTest.o highscore.o -o highscoreTest
+%Test : %.o %Test.c %Test.h mlog.o
+	$(CC) $(CFLAGS) $(LDLIBS) $*Test.c $*.o mlog.o -o $*Test
 
-test: clean highscoreTest 
-	./highscoreTest $(TESTFLAGS)
+%TestRun : %Test
+	./$*Test $(TESTFLAGS)
 
-test-valgrind: clean highscoreTest.dSYM
-	valgrind $(VALGRINDFLAGS) highscoreTest
+%TestRunValgrind : %Test $(TESTDSYMS)
+	valgrind $(VALGRINDFLAGS) $*Test
 
-run: clean all
-	./snake
+wc:
+	wc -l *.c *.h | grep total
 
-run-valgrind: clean snake.dSYM
-	valgrind $(VALGRINDFLAGS) snake
+show-log:
+	if [ -f snake.log ]; then less snake.log; fi
+
+show-valgrind:
+	if [ -f valgrind.log ]; then less valgrind.log; fi
+
+debug: snake.dSYM
+	cgdb -p `ps -el | grep snake | grep -v grep | awk '{print $$2}'`
