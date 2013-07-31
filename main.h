@@ -13,6 +13,8 @@
 #include "position.h"
 #include "segment.h"
 #include "colors.h"
+#include "draw.h"
+#include "board.h"
 
 #ifndef MAIN_H
 #define MAIN_H
@@ -24,28 +26,6 @@ static int SleepingTime = 100 * 1000;
 /*static bool windowIsResized = false;*/
 
 char* highscorePath = "snakehighscore";
-
-enum State {PLAYING, PAUSED, HELP, QUIT, HIGHSCORE};
-/* true when the game is paused */
-static enum State GameState = PLAYING;
-
-/**
- * The playing board keeps track of the snake, the segments and the food 
- * (score). It also has width and height.
- */
-typedef struct Board {
-	/* the size of the board */
-	int width;
-	int height;
-
-	/* the player */
-	Snake *snake;
-
-	/* the food */
-	Segment foodSegment;
-
-	HighscoreTable *highscore;
-} Board;
 
 /**
  * Initialize the board.
@@ -61,28 +41,26 @@ Board *initGame(int width, int height);
 void initNCurses();
 
 /**
- * Checks if the position is occupied on the board. 
- * If the segment is non-air, it is.
- * @param p The position to check.
- * @param b The board to check on.
- * @return true if the position is occupied.
+ * Get text input from the user.
+ * @param msg A meessage to print before prompting.
+ * @param dest A buffer of size bufflen to hold the input.
+ * @param bufflen The length of the dest buffer.
+ * @return true if the input was gotten successfully.
  */
-bool positionIsOccupied(Position p, Board *b);
+int getTextInput(char *msg, char *dest, size_t bufflen);
 
 /**
- * Draw a border.
- * @param character The character to draw the border with.
+ * Called uppon reciving SIGWINCH.
  */
-void drawBorder(int col1, int row1, int col2, int row2);
+/*void resizeBoard(int i);*/
 
 /**
- * Generate food.
- * amount segments of type FOOD is placed on a random non-occupied position on the 
- * board.
- * @param b The board to place food on
- * @param amount The number of pieces to generate
+ * Set the board's width and height.
+ * @param b The board to set on.
+ * @param windowCols The width
+ * @param windowRows The height
  */
-void generateFood(Board *b);
+void setBoardWidthHeight(Board *b, int windowCols, int windowRows);
 
 /**
  * Quit ncurses, print a message with the score and return 0.
@@ -91,41 +69,9 @@ void generateFood(Board *b);
 void lose(Board *b);
 
 /**
- * Checks if the head is out of bounds, ie hits the border.
- * @param b The board to check on.
- * @return True if the head hits the border, else false.
- */
-bool headIsOutOfBoard(Board *b);
-
-/**
- * Move the snake head in its direction.
- * @param b The board to move the snake on.
- */
-void moveSnakeHead(Board *b);
-
-/**
- * Update the moving direction, according to the result of getch().
- * @param b The board to update on.
- */
-void getInput(Board *b);
-
-/**
  * The main game loop.
  * @param b The board of the current game.
  */
 int gameLoop(Board *b);
-
-void drawBorder(int col1, int row1, int col2, int row2);
-void update(Board *b);
-bool hasPlayerLost(Board *b);
-void drawStats(Board *b);
-void drawTextWindowInMiddle(char **text, int nrows);
-void drawHighscore(Board *b);
-void drawHelp();
-int draw(Board *b);
-void resetGame(Board *b);
-int getTextInput(char *msg, char *dest, size_t bufflen);
-/*void resizeBoard(int i);*/
-void setBoardWidthHeight(Board *b, int windowCols, int windowRows);
 
 #endif
