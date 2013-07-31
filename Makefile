@@ -15,7 +15,7 @@ CC= clang
 
 # the objects to be compiled
 UTILITIES= stack.o position.o mlog.o
-OBJECTS= highscore.o main.o snake.o segment.o colors.o $(UTILITIES)
+OBJECTS= highscore.o main.o snake.o segment.o colors.o draw.o board.o $(UTILITIES)
 TESTOBJECTS= highscoreTest.o stackTest.o
 
 # the binary output
