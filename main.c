@@ -25,31 +25,12 @@ int main(int argc, char **argv)
 	writeHighscoreToFile(highscorePath, b->highscore);
 
 	/* memory deallocation */
-	for (int row=0; row<b->height; row++) {
-		if (b->segments[row] != NULL) {
-			free(b->segments[row]);
-		}
-	}
-	free(b->segments);
+	freeSnake(b->snake);
 	freeHighscoreTable(b->highscore);
 	free(b);
 
 	/* pass through the exit status */
 	return toReturn;
-}
-
-void mlog(char *msg)
-{
-	FILE *f = fopen("snake.log", "a+b");
-	
-	/* get the current timestamp and remove the newline */
-	time_t currTime = time(NULL);
-	char *timeString = ctime(&currTime);
-	timeString[24] = '\0';
-
-	/* print the message and close the file */
-	fprintf(f, "%s: %s\n", timeString, msg);
-	fclose(f);
 }
 
 Board* initGame(int width, int height)
@@ -62,17 +43,6 @@ Board* initGame(int width, int height)
 	b->width = width;
 	b->height = height-2;
 
-	/* give the snake's head the head type */
-	b->head.type = HEAD;
-
-	/* initialize the segments array */
-	b->segments = (Segment **) malloc(b->height*sizeof(Segment*));
-
-	/* initialize the segments array */
-	for (int i=0; i<b->height; i++) {
-		b->segments[i] = (Segment *) malloc(b->width*sizeof(Segment));
-	}
-
 	/* load highscore */
 	if ((b->highscore = loadHighscoreFromFile(highscorePath)) == NULL) {
 		endwin();
@@ -80,7 +50,13 @@ Board* initGame(int width, int height)
 		return NULL;
 	}
 
+	/* setup the food segment */
+	b->foodSegment.type = FOOD;
+	b->foodSegment.drawingCharacter = ACS_DIAMOND;
+	b->foodSegment.color_pair = COLOR_PAIR(FOOD_COLOR);
+
 	/* use the reset function to init the rest */
+	b->snake = NULL; /* will be set in resetGame */
 	resetGame(b);
 
 	return b;
@@ -114,97 +90,11 @@ void initNCurses()
 
 	/* initialize the colours */
 	init_color(COLOR_BLUE, 0, 0, 999);
-	init_pair(TEXT_COLOR_INDEX, COLOR_WHITE, COLOR_BLACK); /* wall/text */
-	init_pair(BODY_COLOR_INDEX, COLOR_BLUE, COLOR_BLACK); /* body */
-	init_pair(FOOD_COLOR_INDEX, COLOR_GREEN, COLOR_BLACK); /* food */
-	init_pair(TEXT_INPUT_INDEX, COLOR_BLACK, COLOR_WHITE); /* text input */
-}
-
-void destroyOldBodySegments(Board *b)
-{
-	for (int row=0; row<b->height; row++) {
-		for (int col=0; col<b->width; col++) {
-			/*check if the segment should be removed*/
-			if (b->segments[row][col].type == BODY) {
-
-				/* first decrease the life ticks */
-				b->segments[row][col].lifeTicks 
-					-= LifeTicksDecreaseSpeed;
-
-				/* then check if the segment should die */
-				if (b->segments[row][col].lifeTicks <= 0) {
-					b->segments[row][col].type = AIR;
-					b->segments[row][col].blocking = false;
-				}
-			} 
-		}
-	}
-}
-
-void drawSnake(Board *b)
-{
-	/* draw the segments */
-	int row, col;
-	if (b->segments == NULL) {
-		return;
-	}
-
-	for (row=0; row<b->height; row++) {
-		if (b->segments[row] == NULL) {
-			continue;
-		}
-
-		for (col=0; col<b->width; col++) {
-			/* draw the block */
-			if (b->segments[row][col].type != AIR) {
-				Segment currSeg = b->segments[row][col];
-
-				/* give the character the correct color */
-				int charToWrite = currSeg.drawingCharacter;
-				if (currSeg.type == BODY) {
-					charToWrite |= 
-						COLOR_PAIR(BODY_COLOR_INDEX);
-				} else if (currSeg.type == FOOD) {
-					charToWrite |= 
-						COLOR_PAIR(FOOD_COLOR_INDEX);
-				}
-
-				mvaddch(currSeg.p.row, currSeg.p.column, 
-					charToWrite);
-			}
-		}
-	}
-
-	/* draw the head */
-	int headChar;
-	switch (b->direction) {
-		case LEFT:
-			headChar = ACS_LARROW;
-			break;
-		case RIGHT:
-			headChar = ACS_RARROW;
-			break;
-		case UP:
-			headChar = ACS_UARROW;
-			break;
-		case DOWN:
-			headChar = ACS_DARROW;
-			break;
-	}
-
-	mvaddch(b->head.p.row, b->head.p.column, headChar | 
-		COLOR_PAIR(BODY_COLOR_INDEX));
-}
-
-bool positionIsOccupied(Position p, Board *b)
-{
-	int row = p.row;
-	int col = p.column;
-	if (b->segments[row][col].type != AIR) {
-		return true;
-	}
-
-	return false;
+	init_pair(TEXT_COLOR, COLOR_WHITE, COLOR_BLACK); /* wall/text */
+	init_pair(BODY_COLOR, COLOR_BLUE, COLOR_BLACK); /* body */
+	init_pair(FOOD_COLOR, COLOR_GREEN, COLOR_BLACK); /* food */
+	init_pair(TEXT_INPUT, COLOR_BLACK, COLOR_WHITE); /* text input */
+	init_pair(HEAD_COLOR, COLOR_RED, COLOR_BLACK); /* text input */
 }
 
 void drawBorder(int col1, int row1, int col2, int row2)
@@ -214,29 +104,29 @@ void drawBorder(int col1, int row1, int col2, int row2)
 
 	/* top */
 	for (r=row1,c=col1; c<col2; c++) {
-		mvaddch(r, c,  ACS_HLINE | COLOR_PAIR(TEXT_COLOR_INDEX));
+		mvaddch(r, c,  ACS_HLINE | COLOR_PAIR(TEXT_COLOR));
 	}
 
 	/* bottom */
 	for (r=row2, c=col1; c<col2; c++) {
-		mvaddch(r, c, ACS_HLINE | COLOR_PAIR(TEXT_COLOR_INDEX));
+		mvaddch(r, c, ACS_HLINE | COLOR_PAIR(TEXT_COLOR));
 	}
 
 	/* left */
 	for (r=row1,c=col1; r<row2; r++) { 
-		mvaddch(r, c, ACS_VLINE | COLOR_PAIR(TEXT_COLOR_INDEX));
+		mvaddch(r, c, ACS_VLINE | COLOR_PAIR(TEXT_COLOR));
 	}
 
 	/* right */
 	for (r=row1,c=col2; r<row2; r++) { 
-		mvaddch(r, c, ACS_VLINE | COLOR_PAIR(TEXT_COLOR_INDEX));
+		mvaddch(r, c, ACS_VLINE | COLOR_PAIR(TEXT_COLOR));
 	}
 
 	/* fix corners */
-	mvaddch(row1, col1, ACS_ULCORNER | COLOR_PAIR(TEXT_COLOR_INDEX));
-	mvaddch(row1, col2, ACS_URCORNER | COLOR_PAIR(TEXT_COLOR_INDEX));
-	mvaddch(row2, col1, ACS_LLCORNER | COLOR_PAIR(TEXT_COLOR_INDEX));
-	mvaddch(row2, col2, ACS_LRCORNER | COLOR_PAIR(TEXT_COLOR_INDEX));
+	mvaddch(row1, col1, ACS_ULCORNER | COLOR_PAIR(TEXT_COLOR));
+	mvaddch(row1, col2, ACS_URCORNER | COLOR_PAIR(TEXT_COLOR));
+	mvaddch(row2, col1, ACS_LLCORNER | COLOR_PAIR(TEXT_COLOR));
+	mvaddch(row2, col2, ACS_LRCORNER | COLOR_PAIR(TEXT_COLOR));
 }
 
 void generateFood(Board *b)
@@ -251,16 +141,10 @@ void generateFood(Board *b)
 		col++;
 
 		/* construct the current position */
-		Position pos;
-		pos.row = row;
-		pos.column = col;
+		Position pos = {.row=row, .column=col};
 
-		if (positionIsOccupied(pos, b) == false) {
-			Segment s;
-			s.p = pos;
-			s.type = FOOD;
-			s.drawingCharacter = ACS_DIAMOND;
-			b->segments[row][col] = s;
+		if (isPositionOccupied(b->snake, pos) == false) {
+			b->foodSegment.p = pos;
 			break;
 		}
 	}
@@ -297,7 +181,7 @@ void lose(Board *b)
 	/* get the lowest score, the last one in the records array */
 	int lowestScore = b->highscore->records[b->highscore->count-1].score;
 
-	if (lowestScore < b->food) {
+	if (lowestScore < b->snake->score) {
 		/* get the name */
 		char **text = (char **) malloc(3*sizeof(char **));
 		text[0] = "                    YOU LOST!                 ";
@@ -317,13 +201,11 @@ void lose(Board *b)
 		if (getTextInput("What's your name? ", name, 64) != 0) {
 			GameState = QUIT;
 		}
-		mlog("got line:");
-		mlog(name);
 
 		/* the player has beaten someone, add the player to the 
 		 * highscore list */
-		Record r = {.score = b->food, .timestamp = (long) time(NULL), 
-			.playerName=name};
+		Record r = {.score = b->snake->score, 
+			.timestamp = (long)time(NULL), .playerName=name};
 		insertRecordAndSort(&r, b->highscore);
 		GameState = HIGHSCORE;
 	} else {
@@ -337,7 +219,7 @@ void lose(Board *b)
 bool headIsOutOfBoard(Board *b)
 {
 	/* the head's position */
-	Position hp = b->head.p;
+	Position hp = b->snake->head.p;
 
 	if (hp.row < 1 || hp.row >= b->height-1 || hp.column < 1 ||
 			hp.column >= b->width-1) {
@@ -347,53 +229,35 @@ bool headIsOutOfBoard(Board *b)
 	return false;
 }
 
-void moveSnakeHead(Board *b) {
-	/* move the snake's head in the current moving direction */
-	switch (b->direction) {
-		case LEFT:
-			b->head.p.column--;
-			break;
-		case UP:
-			b->head.p.row--;
-			break;
-		case RIGHT:
-			b->head.p.column++;
-			break;
-		case DOWN:
-			b->head.p.row++;
-			break;
-	}
-}
-
 void getInput(Board *b) {
 	/* save the old direction */
-	b->previousDirection = b->direction;
+	b->snake->previousDirection = b->snake->direction;
 
 	/* get the new direction */
 	int ch = getch();
 	switch (ch) {
 		case 'a': 
 		case KEY_LEFT:
-			if (b->direction != RIGHT) {
-				b->direction = LEFT;
+			if (b->snake->direction != RIGHT) {
+				b->snake->direction = LEFT;
 			}
 			break;
 		case 'd': 
 		case KEY_RIGHT:
-			if (b->direction != LEFT) {
-				b->direction = RIGHT;
+			if (b->snake->direction != LEFT) {
+				b->snake->direction = RIGHT;
 			}
 			break;
 		case 's': 
 		case KEY_DOWN:
-			if (b->direction != UP) {
-				b->direction = DOWN;
+			if (b->snake->direction != UP) {
+				b->snake->direction = DOWN;
 			}
 			break;
 		case 'w': 
 		case KEY_UP:
-			if (b->direction != DOWN) {
-				b->direction = UP;
+			if (b->snake->direction != DOWN) {
+				b->snake->direction = UP;
 			}
 			break;
 		case 'p':
@@ -412,103 +276,48 @@ void getInput(Board *b) {
 	}
 }
 
-void createBodySegmentAtHeadPosition(Board *b)
+void checkForFood(Board *b)
 {
-	/* set asegment at the heads position */
-	Segment s;
-	s.p.row = b->head.p.row;
-	s.p.column = b->head.p.column;
-	s.lifeTicks = SegmentLife;
-	s.blocking = true;
-	s.type = BODY;
-	if (b->direction != b->previousDirection) {
-		/* the snake is changing direction */
-		if (b->previousDirection == RIGHT && b->direction == DOWN) {
-			s.drawingCharacter = ACS_URCORNER;
-		} else if (b->previousDirection == RIGHT && b->direction == UP) {
-			s.drawingCharacter = ACS_LRCORNER;
-		} else if (b->previousDirection == DOWN && b->direction == RIGHT) {
-			s.drawingCharacter = ACS_LLCORNER;
-		} else if (b->previousDirection == DOWN && b->direction == LEFT) {
-			s.drawingCharacter = ACS_LRCORNER;
-		} else if (b->previousDirection == LEFT && b->direction == UP) {
-			s.drawingCharacter = ACS_LLCORNER;
-		} else if (b->previousDirection == LEFT && b->direction == DOWN) {
-			s.drawingCharacter = ACS_ULCORNER;
-		} else if (b->previousDirection == UP && b->direction == LEFT) {
-			s.drawingCharacter = ACS_URCORNER;
-		} else if (b->previousDirection == UP && b->direction == RIGHT) {
-			s.drawingCharacter = ACS_ULCORNER;
-		}
-	} else if (b->direction == UP || b->direction == DOWN) {
-		s.drawingCharacter = ACS_VLINE;
-	} else if (b->direction == LEFT || b->direction == RIGHT) {
-		s.drawingCharacter = ACS_HLINE;
+	if (positionEqual(b->foodSegment.p, b->snake->head.p) == true) {
+		/* there is food here! 
+		 *  - Increase the score
+		 *  - Increase the living time (the length)
+		 *  - add a segment at the head
+		 *  - create more food*/
+		b->snake->score++;
+		b->snake->segmentLivingTime += SegmentLife;
+		addSegmentAtHeadsPosition(b->snake);
+		generateFood(b);
 	}
-
-	b->segments[b->head.p.row][b->head.p.column] = s;
 }
 
 void update(Board *b)
 {
-
-	/* update/move the snake */
-	createBodySegmentAtHeadPosition(b);
-	moveSnakeHead(b);
-	destroyOldBodySegments(b);
+	checkForFood(b);
+	updateSnake(b->snake);
 }
 
 bool hasPlayerLost(Board *b)
 {
-	/* check if the head has hit something */
-	if (positionIsOccupied(b->head.p, b) == true) {
+	/* check if the snake hits itself */
+	if (isPositionOccupied(b->snake, b->snake->head.p) == true) {
 		/* there is something at the head */
-		Segment currSeg = b->segments[b->head.p.row]
-			[b->head.p.column];
-
-		if (currSeg.type == FOOD) {
-			/* we found food! */
-			b->food++;
-			generateFood(b);
-
-			/* make the snake longer (by making the 
-			 * segments live longer) */
-			SegmentLife += LifeTicksDecreaseSpeed;
-		} else if (currSeg.blocking == true) {
-			/* there was something blocking, the snake is 
-			 * dead! */
-			return true;
-		}
-	}
-
-	if (headIsOutOfBoard(b) == true) {
 		return true;
+	} else if (headIsOutOfBoard(b) == true) {
+		return true;
+	} else {
+		return false;
 	}
-
-	return false;
 }
 
 void resetGame(Board *b)
 {
-	/* place the head at the middle */
-	b->head.p.row = b->height/2;
-	b->head.p.column = b->width/2;
-
-	/* set movind direction */
-	b->direction = UP;
-
-	/* replace the segments array with air segments */
-	for (int row=0; row<b->height; row++) {
-		for (int col=0; col<b->width; col++) {
-			struct timeval t;
-			gettimeofday(&t, NULL);
-			Segment s = {{row, col}, AIR, -1, false};
-			b->segments[row][col] = s;
-		}
+	/* replace the snake */
+	if (b->snake != NULL) {
+		freeSnake(b->snake);
 	}
 
-	/* reset the food */
-	b->food = 0;
+	b->snake = newSnake(b->height/2, b->width/2);
 
 	/* add some food */
 	generateFood(b);
@@ -516,7 +325,7 @@ void resetGame(Board *b)
 
 void drawStats(Board *b)
 {
-	int score = b->food;
+	int score = b->snake->score;
 	char *scoreString, *helpString;
 	asprintf(&scoreString, "Score: %10d ", score);
 	asprintf(&helpString, " Press h for help.");
@@ -528,9 +337,9 @@ void drawStats(Board *b)
 	getyx(stdscr, y, x);
 
 	/* write separator and tees */
-	addch(ACS_VLINE | COLOR_PAIR(TEXT_COLOR_INDEX));
-	mvaddch(y-1, x, ACS_TTEE | COLOR_PAIR(TEXT_COLOR_INDEX));
-	mvaddch(y+1, x, ACS_BTEE | COLOR_PAIR(TEXT_COLOR_INDEX));
+	addch(ACS_VLINE | COLOR_PAIR(TEXT_COLOR));
+	mvaddch(y-1, x, ACS_TTEE | COLOR_PAIR(TEXT_COLOR));
+	mvaddch(y+1, x, ACS_BTEE | COLOR_PAIR(TEXT_COLOR));
 
 	/* write the help string */
 	mvaddstr(y, x+1, helpString);
@@ -642,8 +451,11 @@ int draw(Board *b)
 	/* draw the border around everything */
 	drawBorder(0, 0, COLS-1, LINES-1);
 
+	/* draw the food */
+	drawSegment(&b->foodSegment);
+
 	/* draw the snake */
-	drawSnake(b);
+	drawSnake(b->snake);
 
 	char *textarr[2];
 	switch (GameState) {
