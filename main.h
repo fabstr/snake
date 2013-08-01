@@ -15,6 +15,7 @@
 #include "colors.h"
 #include "draw.h"
 #include "board.h"
+#include "cmdlineargs.h"
 
 #ifndef MAIN_H
 #define MAIN_H
@@ -65,8 +66,9 @@ void setBoardWidthHeight(Board *b, int windowCols, int windowRows);
 /**
  * Quit ncurses, print a message with the score and return 0.
  * @param b The board used for the game.
+ * @param GameState A pointer to the current gamestate
  */
-void lose(Board *b);
+void lose(Board *b, State *GameState);
 
 /**
  * The main game loop.

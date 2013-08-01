@@ -136,7 +136,7 @@ int getTextInput(char *msg, char *dest, size_t bufflen)
 	}
 }
 
-void lose(Board *b) 
+void lose(Board *b, State *GameState)
 {
 	/* get the lowest score, the last one in the records array */
 	int lowestScore = b->highscore->records[b->highscore->count-1].score;
@@ -159,7 +159,7 @@ void lose(Board *b)
 		/* get the user's name */
 		char *name = (char *) malloc(64);
 		if (getTextInput("What's your name? ", name, 64) != 0) {
-			GameState = QUIT;
+			*GameState = QUIT;
 		}
 
 		/* the player has beaten someone, add the player to the 
@@ -167,7 +167,7 @@ void lose(Board *b)
 		Record r = {.score = b->snake->score, 
 			.timestamp = (long)time(NULL), .playerName=name};
 		insertRecordAndSort(&r, b->highscore);
-		GameState = HIGHSCORE;
+		*GameState = HIGHSCORE;
 	} else {
 
 	}
@@ -178,6 +178,8 @@ void lose(Board *b)
 
 int gameLoop(Board *b) 
 {
+	State GameState = PLAYING;
+
 	while (true) {
 		/* check if the window is resized */
 		/*if (windowIsResized == true) {*/
@@ -186,7 +188,7 @@ int gameLoop(Board *b)
 		/*}*/
 
 		/* get input from user */
-		getInput(b);
+		getInput(b, &GameState);
 
 		switch (GameState) {
 			case PLAYING:
@@ -195,7 +197,7 @@ int gameLoop(Board *b)
 				/* check if the player has lost, this function
 				 * also handles the food */
 				if (hasPlayerLost(b) == true) {
-					lose(b);
+					lose(b, &GameState);
 				}
 				break;
 			case QUIT:
@@ -206,7 +208,7 @@ int gameLoop(Board *b)
 
 		}
 
-		if (draw(b) != 0) {
+		if (draw(b, &GameState) != 0) {
 			/* there was an error */
 			return 1;
 		}

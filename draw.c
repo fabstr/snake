@@ -143,7 +143,7 @@ void drawHelp()
 }
 
 /* return non-zero on error */
-int draw(Board *b)
+int draw(Board *b, State *GameState)
 {
 	/* clear the screen */
 	if (erase() != OK) {
@@ -166,7 +166,7 @@ int draw(Board *b)
 	drawSnake(b->snake);
 
 	char *textarr[2];
-	switch (GameState) {
+	switch (*GameState) {
 		case HELP:
 			drawHelp();
 			break;

@@ -34,7 +34,7 @@ bool headIsOutOfBoard(Board *b)
 	return false;
 }
 
-void getInput(Board *b) {
+void getInput(Board *b, State *GameState) {
 	/* save the old direction */
 	b->snake->previousDirection = b->snake->direction;
 
@@ -66,16 +66,16 @@ void getInput(Board *b) {
 			}
 			break;
 		case 'p':
-			GameState = (GameState == PAUSED) ? PLAYING : PAUSED;
+			*GameState = (*GameState == PAUSED) ? PLAYING : PAUSED;
 			break;
 		case 'h':
-			GameState = (GameState == HELP) ? PLAYING : HELP;
+			*GameState = (*GameState == HELP) ? PLAYING : HELP;
 			break;
 		case 'q':
-			GameState = QUIT;
+			*GameState = QUIT;
 			break;
 		case 't':
-			GameState = (GameState == HIGHSCORE) ?
+			*GameState = (*GameState == HIGHSCORE) ?
 				PLAYING : HIGHSCORE;
 			break;
 	}
@@ -122,7 +122,7 @@ void checkForFood(Board *b)
 		 *  - add a segment at the head
 		 *  - create more food*/
 		b->snake->score++;
-		b->snake->segmentLivingTime += SegmentLife;
+		b->snake->segmentLivingTime += b->snake->segmentLife;
 		addSegmentAtHeadsPosition(b->snake);
 		generateFood(b);
 	}

@@ -13,6 +13,6 @@ void drawStats(Board *b);
 void drawTextWindowInMiddle(char **text, int nrows);
 void drawHighscore(Board *b);
 void drawHelp();
-int draw(Board *b);
+int draw(Board *b, State *GameState);
 
 #endif

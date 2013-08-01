@@ -7,9 +7,7 @@
 
 /* the game states */
 enum State {PLAYING, PAUSED, HELP, QUIT, HIGHSCORE};
-
-/* true when the game is paused */
-static enum State GameState = PLAYING;
+typedef enum State State;
 
 /**
  * The playing board keeps track of the snake, the segments and the food 
@@ -49,7 +47,7 @@ bool headIsOutOfBoard(Board *b);
  * Update the moving direction, according to the result of getch().
  * @param b The board to update on.
  */
-void getInput(Board *b);
+void getInput(Board *b, State *GameState);
 
 /**
  * Update the game board.
