@@ -5,22 +5,22 @@ CFLAGS= -g -O0 -Wall
 VALGRINDFLAGS= --leak-check=full --log-file=valgrind.log --track-origins=yes 
 
 # the flags for the testing
-TESTFLAGS= --show-passed=yes
+TESTFLAGS= --show-passed=no
 
 # the libraries used
-LDLIBS= -lncurses
+BINLDLIBS= -lncurses
 
 # the c99 compiler
 CC= clang
 
 # the objects to be compiled
-UTILITIES= stack.o position.o mlog.o
-OBJECTS= highscore.o main.o snake.o segment.o colors.o draw.o board.o $(UTILITIES)
-TESTOBJECTS= highscoreTest.o stackTest.o
+OBJECTS= highscore.o main.o snake.o segment.o colors.o draw.o board.o cmdlineargs.o stack.o position.o mlog.o
+TESTOBJECTS= highscoreTest.o stackTest.o cmdlineargsTest.o
+TESTUTILITIES= testing.o mlog.o
 
 # the binary output
 BIN= snake
-TESTBINS= highscoreTest stackTest
+TESTBINS= highscoreTest stackTest cmdlineargsTest
 
 # to run the tests
 TESTRUNS= $(TESTBINS:Test=TestRun)
@@ -29,13 +29,13 @@ TESTDSYMS= $(TESTOBJECTS:.o=.dSYM)
 DSYMS= $(OBJECTS:.o=.dSYM)
 
 # the test files to clean
-TESTCLEAN= $(TESTOBJECTS) $(TESTBINS) $(TESTDSYMS) highscore-test.txt valgrind.log 
+TESTCLEAN= $(TESTOBJECTS) $(TESTBINS) $(TESTDSYMS) $(TESTUTILITIES) highscore-test.txt valgrind.log 
 
 # other files to remove whilst cleaning
 OTHERCLEANING= snake.log snake.dSYM
 
 snake: $(OBJECTS)
-	$(CC) $(CFLAGS) $(LDLIBS) -o $(BIN) $(OBJECTS)
+	$(CC) $(CFLAGS) $(BINLDLIBS) -o $(BIN) $(OBJECTS)
 
 test: $(TESTRUNS)
 
@@ -58,8 +58,8 @@ clean:
 	rm -rf $(OTHERCLEANING) 
 	rm -rf $(TESTCLEAN)
 
-%Test : %.o %Test.c %Test.h mlog.o
-	$(CC) $(CFLAGS) $(LDLIBS) $*Test.c $*.o mlog.o -o $*Test
+%Test : %.o %Test.c %Test.h $(TESTUTILITIES)
+	$(CC) $(CFLAGS) $(LDLIBS) $*Test.c $*.o $(TESTUTILITIES) -o $*Test
 
 %TestRun : %Test
 	./$*Test $(TESTFLAGS)
