@@ -2,49 +2,45 @@
 
 void printTestStruct(testStruct *ts)
 {
-	printf("{.string='%s'}\n", ts->string);
+	printf("{.string='%s'}", ts->string);
 }
 
-void testNewStack()
+void testNewStack(bool showPassedTests)
 {
 	Stack *s = newStack();
-	
+
 	if (s->size != 10) {
-		printf("TEST FAILURE: testNewStack, size not 10\n");
+		fmsg("testNewStack, size not 10");
 	} else if (s->currPos != -1) {
-		printf("TEST FAILURE: testNewStack, currPos not NULL\n");
+		fmsg("testNewStack, currPos not NULL");
 	} else {
-		if (ShowPass == true) {
-			printf("PASS: testNewStack\n");
-		}
+		pmsg("testNewStack");
 	}
 
 	freeStack(s);
 }
 
-void testTop()
+void testTop(bool showPassedTests)
 {
 	Stack *s = newStack();
 
 	int x = 42;
 	int *y;
-	
+
 	push(s, &x);
 
 	y = (int *) top(s);
 
 	if (x != *y) {
-		printf("TEST FAILURE: testTop, x = %d != %d\n", x, *y);
+		fmsg("testTop, x = %d != %d", x, *y);
 	} else {
-		if (ShowPass == true) {
-			printf("PASS: testTop\n");
-		}
+		pmsg("testTop");
 	}
 
 	freeStack(s);
 }
 
-void testPushAndPop()
+void testPushAndPop(bool showPassedTests)
 {
 	/* create the stack and an integer */
 	Stack *s = newStack();
@@ -58,20 +54,18 @@ void testPushAndPop()
 	y = (int *) pop(s);
 
 	if (x != *y) {
-		printf("TEST FAILURE: testPushAndPop, x = %d != %d\n", x, *y);
+		fmsg("testPushAndPop, x = %d != %d", x, *y);
 	} else if (s->currPos != -1) {
-		printf("TEST FAILURE: testPushAndPop, currPos != 0, is %d\n", 
+		fmsg("testPushAndPop, currPos != 0, is %d", 
 				s->currPos);
 	} else {
-		if (ShowPass == true) {
-			printf("PASS: testPushAndPop\n");
-		}
+		pmsg("testPushAndPop");
 	}
 
 	freeStack(s);
 }
 
-void testPushPopMany() 
+void testPushPopMany(bool showPassedTests)
 {
 	Stack *s = newStack();
 	int arr[7] = {0, 1, 2, 3, 4, 5, 6};
@@ -88,17 +82,15 @@ void testPushPopMany()
 	}
 
 	if (failure == true) {
-		printf("TEST FAILURE: testPushPopMany, array failure\n");
+		fmsg("testPushPopMany, array failure");
 	} else {
-		if (ShowPass == true) {
-			printf("PASS: testPushPopMany\n");
-		}
+		pmsg("testPushPopMany");
 	}
 
 	freeStack(s);
 }
 
-void testExpand()
+void testExpand(bool showPassedTests)
 {
 	Stack *s = newStack();
 	int arr[27];
@@ -116,24 +108,20 @@ void testExpand()
 	}
 
 	if (failure == true) {
-		printf("TEST FAILURE: testExpand, array failure\n");
+		fmsg("testExpand, array failure");
 	} else {
-		if (ShowPass == true) {
-			printf("PASS: testExpand\n");
-		}
+		pmsg("testExpand");
 	}
 
 	freeStack(s);
 }
 
-void testInitialStackSize()
+void testInitialStackSize(bool showPassedTests)
 {
 	if (INITIALSTACKSIZE != 10) {
-		printf("TEST FAILURE: testInitialStackSize, not 10\n");
+		fmsg("testInitialStackSize, not 10");
 	} else {
-		if (ShowPass == true) {
-			printf("PASS: testInitialStackSize\n");
-		}
+		pmsg("testInitialStackSize");
 	}
 }
 
@@ -143,7 +131,7 @@ void loopTestFunction(void *e)
 	lts->string = "touched";
 }
 
-void testLoopStack()
+void testLoopStack(bool showPassedTests)
 {
 	Stack *s = newStack();
 	testStruct arr[4] = {[0]={.string="zero"}, [1]={.string="one"},
@@ -165,11 +153,9 @@ void testLoopStack()
 	}
 
 	if (passed == false) {
-		printf("TEST FAILURE: testLoopStack\n");
+		fmsg("testLoopStack");
 	} else {
-		if (ShowPass == true) {
-			printf("PASS: testLoopStack\n");
-		}
+		pmsg("testLoopStack");
 	}
 
 	freeStack(s);
@@ -177,21 +163,22 @@ void testLoopStack()
 
 int main(int argc, char **argv)
 {
+	bool showPassedTests = false;
 	if (argc > 1) {
 		if (strcmp("--show-passed=yes", argv[1]) == 0) {
-			ShowPass = true;
+			showPassedTests = true;
 		} else {
-			ShowPass = false;
+			showPassedTests = false;
 		}
 	}
 
-	testNewStack();
-	testTop();
-	testPushAndPop();
-	testPushPopMany();
-	testExpand();
-	testInitialStackSize();
-	testLoopStack();
+	testNewStack(showPassedTests);
+	testTop(showPassedTests);
+	testPushAndPop(showPassedTests);
+	testPushPopMany(showPassedTests);
+	testExpand(showPassedTests);
+	testInitialStackSize(showPassedTests);
+	testLoopStack(showPassedTests);
 
 	return 0;
 }
