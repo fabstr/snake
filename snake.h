@@ -10,12 +10,8 @@
 #ifndef SNAKE_H
 #define SNAKE_H
 
-/* the time each segment live */
-static int SegmentLife = 10;
-
 /* the directions the snake can move */
 enum Directions {LEFT, RIGHT, UP, DOWN};
-
 
 typedef struct Snake {
 	/* the head of the snake */
@@ -26,6 +22,9 @@ typedef struct Snake {
 
 	/* the latest non-occupied position in the segments array */
 	int segPos;
+
+	/* the time each segment in this snake should live */
+	int segmentLife;
 
 	enum Directions direction;
 	enum Directions previousDirection;

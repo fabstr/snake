@@ -38,7 +38,7 @@ void destroyOldBodySegments(Snake *s)
 		Segment *currSeg = pop(s->segmentStack);
 
 		/* first decrease the life */
-		currSeg->lifeTicks -= SegmentLife;
+		currSeg->lifeTicks -= s->segmentLife;
 
 		if (currSeg->lifeTicks> 0) {
 			/* the segment should live */
@@ -98,6 +98,7 @@ Snake *newSnake(int y, int x)
 	s->direction = UP;
 	s->segmentLivingTime = 0;
 	s->score = 0;
+	s->segmentLife = 10;
 
 	createHead(&s->head, y, x);
 
@@ -139,7 +140,7 @@ void addSegmentAtHeadsPosition(Snake *s)
 
 	seg->p.row = s->head.p.row;
 	seg->p.column = s->head.p.column;
-	seg->lifeTicks = SegmentLife + s->segmentLivingTime;
+	seg->lifeTicks = s->segmentLife + s->segmentLivingTime;
 	seg->blocking = true;
 	seg->type = BODY;
 	seg->color_pair = COLOR_PAIR(BODY_COLOR);
