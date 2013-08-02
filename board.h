@@ -22,7 +22,7 @@ typedef struct Board {
 	Snake *snake;
 
 	/* the food */
-	Segment foodSegment;
+	struct Segment foodSegment;
 
 	HighscoreTable *highscore;
 } Board;

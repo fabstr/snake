@@ -2,10 +2,10 @@
 #include <curses.h>
 
 #include "position.h"
-#include "stack.h"
 #include "segment.h"
 #include "colors.h"
 #include "mlog.h"
+#include "queue.h"
 
 #ifndef SNAKE_H
 #define SNAKE_H
@@ -14,11 +14,12 @@
 enum Directions {LEFT, RIGHT, UP, DOWN};
 
 typedef struct Snake {
-	/* the head of the snake */
-	Segment head;
+	/* the snake's head */
+	struct Segment head;
 
-	/* the body, stack och Segment* */
-	Stack *segmentStack;
+	/* the body, a tailq of segments */
+	TAILQ_HEAD(snakebody, Segment);
+	struct snakebody *body;
 
 	/* the latest non-occupied position in the segments array */
 	int segPos;
@@ -96,7 +97,7 @@ void addSegmentAtHeadsPosition(Snake *s);
  * @param x The x coordinate of the head
  * @return 0 on success, else 1.
  */
-int createHead(Segment *head, int y, int x);
+int createHead(struct Segment *head, int y, int x);
 
 /** 
  * Update the snake.

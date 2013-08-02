@@ -2,7 +2,7 @@
 
 # the source files
 SRCS = main.c snake.c highscore.c segment.c colors.c draw.c board.c \
-       cmdlineargs.c stack.c position.c mlog.c
+       cmdlineargs.c position.c mlog.c 
 TESTSRCS = highscoreTest.c stackTest.c cmdlineargsTest.c
 
 # the compiler flags
@@ -18,7 +18,7 @@ CC = clang
 BIN = snake
 
 # the test output files
-TESTBINS = highscoreTest stackTest cmdlineargsTest
+TESTBINS = highscoreTest cmdlineargsTest
 
 # other files to clean
 OTHERCLEANING = snake.log highscore-test.txt valgrind.log
@@ -48,12 +48,14 @@ all: $(OBJECTS)
 run: all
 	./$(BIN)
 
-test: $(TESTBINS)
+run-valgrind: all $(BIN).dSYM
+	valgrind $(VLGDFLAGS) $(BIN)
+
+tests: $(TESTBINS)
 
 run-tests: $(TESTRUNS)
 
 run-tests-valgrind: $(TESTRUNS)
-
 
 %-runTest: %Test
 	./$*Test $(TESTFLAGS)
@@ -65,7 +67,7 @@ wc:
 	wc -l *.c *.h | grep total
 
 top:
-	top -pid `ps -el | grep snake | grep -v grep | awk '{print $$2}'`
+	echo  -pid `ps -el | grep snake | grep -v grep | awk '{print $$2}'`
 
 clean:
 	@rm -f $(OBJECTS) $(TESTOBJECTS) # the object files

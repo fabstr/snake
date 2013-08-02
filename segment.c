@@ -1,6 +1,6 @@
 #include "segment.h"
 
-void drawSegment(Segment *seg)
+void drawSegment(struct Segment *seg)
 {
 	/* give the character the correct color */
 	int charToWrite = seg->drawingCharacter | seg->color_pair;
@@ -10,10 +10,7 @@ void drawSegment(Segment *seg)
 
 }
 
-void drawSegmentFromVoid(void *seg)
-{
-	drawSegment((Segment*) seg);
-
-	Segment *s = (Segment *) seg;
-	mlog("drawing segment at y=%d x=%d", s->p.row, s->p.column);
-}
+/*void drawSegmentFromVoid(void *seg)*/
+/*{*/
+	/*drawSegment((struct Segment*) seg);*/
+/*}*/

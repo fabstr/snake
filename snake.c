@@ -27,41 +27,26 @@ void moveSnake(Snake *s, enum Directions d)
 
 void destroyOldBodySegments(Snake *s)
 {
-	/* the segments that are not to be removed are put here */
-	Stack *tmpStack = newStack();
-
-	/* when to stop iterating */
-	int max = s->segmentStack->currPos;
-
-	for (int i=0; i<=max; i++) {
-		/* get the current segment */
-		Segment *currSeg = pop(s->segmentStack);
-
+	struct Segment *currSeg, *currSegTmp;
+	TAILQ_FOREACH_SAFE(currSeg, s->body, segments, currSegTmp) {
 		/* first decrease the life */
 		currSeg->lifeTicks -= s->segmentLife;
 
-		if (currSeg->lifeTicks> 0) {
-			/* the segment should live */
-			mlog("pushing segment y=%d x=%d", currSeg->p.row, 
-					currSeg->p.column);
-			push(tmpStack, currSeg);
-		} else {
-			mlog("freeing segment y=%d x=%d", currSeg->p.row, 
-					currSeg->p.column);
+		if (currSeg->lifeTicks <= 0) {
 			/* the segment should die */
+			TAILQ_REMOVE(s->body, currSeg, segments);
 			free(currSeg);
-		}
+		} 
 	}
-
-	/* switch stacks, free the old one */
-	freeStack(s->segmentStack);
-	s->segmentStack = tmpStack;
 }
 
 void drawSnake(Snake *s)
 {
 	/* draw the body */
-	loopStack(s->segmentStack, drawSegmentFromVoid);
+	struct Segment *currSeg;
+	TAILQ_FOREACH(currSeg, s->body, segments) {
+		drawSegment(currSeg);
+	}
 
 	/* draw the head */
 	drawSnakeHead(s);
@@ -86,16 +71,17 @@ void drawSnakeHead(Snake *s)
 			break;
 	}
 
-	mvaddch(s->head.p.row, s->head.p.column, 
-			headChar | s->head.color_pair);
+	move(s->head.p.row, s->head.p.column);
+	addch(headChar | s->head.color_pair);
 }
 
 Snake *newSnake(int y, int x)
 {
 	Snake *s = (Snake *) malloc(sizeof(Snake));
-	s->segmentStack = newStack();
+	s->body = (struct snakebody *) malloc(sizeof(struct snakebody));
+	TAILQ_INIT(s->body);
 	s->direction = UP;
-	s->direction = UP;
+	s->previousDirection = UP;
 	s->segmentLivingTime = 0;
 	s->score = 0;
 	s->segmentLife = 10;
@@ -107,21 +93,23 @@ Snake *newSnake(int y, int x)
 
 void freeSnake(Snake *s)
 {
-	/* free the segments */
-	loopStack(s->segmentStack, free);
+	/* free the body */
+	struct Segment *currSeg, *currSegTmp;
+	TAILQ_FOREACH_SAFE(currSeg, s->body, segments, currSegTmp) {
+		TAILQ_REMOVE(s->body, currSeg,  segments);
+		free(currSeg);
+	}
+	free(TAILQ_FIRST(s->body));
 
-	/* and the stack */
-	freeStack(s->segmentStack);
-
-	/* finally the snake */
+	/* and the snake */
 	free(s);
 }
 
 bool isPositionOccupied(Snake *s, Position p)
 {
-	for (int i=0; i<s->segmentStack->currPos; i++) {
-		Segment *currElement = get(s->segmentStack, i);
-		if (positionEqual(p, currElement->p)) {
+	struct Segment *currSeg;
+	TAILQ_FOREACH(currSeg, s->body, segments) {
+		if (positionEqual(p, currSeg->p)) {
 			return true;
 		}
 	}
@@ -131,20 +119,23 @@ bool isPositionOccupied(Snake *s, Position p)
 
 void addSegmentAtHeadsPosition(Snake *s)
 {
-	/* set a segment at the heads position */
-	Segment *seg = (Segment *) malloc(sizeof(Segment));
+	/* allocate memory */
+	struct Segment *seg = (struct Segment *) 
+		malloc(sizeof(struct Segment));
 	if (seg == NULL) {
-		mlog("seg == null");
 		return;
 	}
 
+	/* construct the segment */
 	seg->p.row = s->head.p.row;
 	seg->p.column = s->head.p.column;
 	seg->lifeTicks = s->segmentLife + s->segmentLivingTime;
 	seg->blocking = true;
 	seg->type = BODY;
 	seg->color_pair = COLOR_PAIR(BODY_COLOR);
-	seg->drawingCharacter = 'o';
+
+	/* give the segment a correct drawing character (curses corners/lines) 
+	 */
 	if (s->direction != s->previousDirection) {
 		/* the snake is changing direction */
 		if (s->previousDirection == RIGHT && s->direction == DOWN) {
@@ -177,10 +168,11 @@ void addSegmentAtHeadsPosition(Snake *s)
 		seg->drawingCharacter = ACS_HLINE;
 	}
 
-	push(s->segmentStack, seg);
+	/* add the segment */
+	TAILQ_INSERT_HEAD(s->body, seg, segments);
 }
 
-int createHead(Segment *head, int y, int x)
+int createHead(struct Segment *head, int y, int x)
 {
 	head->p.row = y;
 	head->p.column = x;
@@ -194,9 +186,7 @@ int createHead(Segment *head, int y, int x)
 
 void updateSnake(Snake *s)
 {
-	if (s->segmentStack->currPos >= 0) {
-		addSegmentAtHeadsPosition(s);
-	}
+	addSegmentAtHeadsPosition(s);
 	moveSnake(s, s->direction);
 	destroyOldBodySegments(s);
 }

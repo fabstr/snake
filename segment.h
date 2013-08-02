@@ -3,6 +3,7 @@
 #include "position.h"
 #include "mlog.h"
 #include "stdlib.h"
+#include "queue.h"
 
 #ifndef SEGMENT_H
 #define SEGMENT_H
@@ -13,7 +14,7 @@ enum SegmentType {HEAD, BODY, WALL, AIR, FOOD};
 /**
  * A segment is placed on the playing board.
  */
-typedef struct Segment {
+struct Segment {
 	/* the position of the segment */
 	Position p;
 
@@ -31,23 +32,26 @@ typedef struct Segment {
 
 	/* the ncurses color of the segment */
 	int color_pair;
-} Segment;
+
+	/* makes up the tailq */
+	TAILQ_ENTRY(Segment) segments;
+};
 
 /**
  * Draw a segment on the screen.
  * @param seg THe segment to draw.
  */
-void drawSegment(Segment *seg);
+void drawSegment(struct Segment *seg);
 
 /**
  * Like drawSegment but seg comes from a void*.
  * @param seg The segment to draw.
  */
-void drawSegmentFromVoid(void *seg);
+//void drawSegmentFromVoid(void *seg);
 
 /**
  * Free the segment.
  * @param seg The segment to free.
  */
-void freeSegment(Segment *seg);
+void freeSegment(struct Segment *seg);
 #endif
