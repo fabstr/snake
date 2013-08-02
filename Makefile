@@ -1,80 +1,91 @@
-# the flags for the compiler
-CFLAGS= -g -O0 -Wall
+.PHONY: all run test run-tests wc top clean
 
-# the flags for valgrind
-VALGRINDFLAGS= --leak-check=full --log-file=valgrind.log --track-origins=yes 
+# the source files
+SRCS = main.c snake.c highscore.c segment.c colors.c draw.c board.c \
+       cmdlineargs.c stack.c position.c mlog.c
+TESTSRCS = highscoreTest.c stackTest.c cmdlineargsTest.c
 
-# the flags for the testing
-TESTFLAGS= --show-passed=no
+# the compiler flags
+CFLAGS = -g -O0 -Wall
 
 # the libraries used
-BINLDLIBS= -lncurses
+LDLIBS = -lncurses
 
 # the c99 compiler
-CC= clang
+CC = clang
 
-# the objects to be compiled
-OBJECTS= highscore.o main.o snake.o segment.o colors.o draw.o board.o cmdlineargs.o stack.o position.o mlog.o
-TESTOBJECTS= highscoreTest.o stackTest.o cmdlineargsTest.o
-TESTUTILITIES= testing.o mlog.o
+# the output file
+BIN = snake
 
-# the binary output
-BIN= snake
-TESTBINS= highscoreTest stackTest cmdlineargsTest
+# the test output files
+TESTBINS = highscoreTest stackTest cmdlineargsTest
+
+# other files to clean
+OTHERCLEANING = snake.log highscore-test.txt valgrind.log
+
+# dSYM's to remove
+DSYMS = $(BIN:=.dSYM) $(TESTBINS:=.dSYM)
+
+# the dependency files
+DEPS = $(SRCS:.c=.P)
+TESTDEPS = $(TESTSRCS:.c=.P)
 
 # to run the tests
-TESTRUNS= $(TESTBINS:Test=TestRun)
-TESTRUNVALGRIND= $(TESTBINS:Test=TestRunValgrind)
-TESTDSYMS= $(TESTOBJECTS:.o=.dSYM)
-DSYMS= $(OBJECTS:.o=.dSYM)
+TESTRUNS = $(TESTBINS:Test=-runTest)
+TESTFLAGS = --show-passed=yes
+TESTLIBS = mlog.o
 
-# the test files to clean
-TESTCLEAN= $(TESTOBJECTS) $(TESTBINS) $(TESTDSYMS) $(TESTUTILITIES) highscore-test.txt valgrind.log 
+# the valgrind flags
+VLGDFLAGS = --leak-check=full --log-file=valgrind.log --track-origins=yes 
 
-# other files to remove whilst cleaning
-OTHERCLEANING= snake.log snake.dSYM
+# the objects files
+OBJECTS = $(SRCS:.c=.o)
+TESTOBJECTS = $(TESTSRCS:.c=.o)
 
-snake: $(OBJECTS)
-	$(CC) $(CFLAGS) $(BINLDLIBS) -o $(BIN) $(OBJECTS)
+all: $(OBJECTS)
+	$(CC) $(CFLAGS) $(LDLIBS) -o $(BIN) $(OBJECTS)
 
-test: $(TESTRUNS)
+run: all
+	./$(BIN)
 
-testValgrind: $(TESTRUNVALGRIND)
+test: $(TESTBINS)
 
-run: snake
-	./snake
+run-tests: $(TESTRUNS)
 
-run-valgrind: snake.dSYM
-	valgrind $(VALGRINDFLAGS) snake 
+run-tests-valgrind: $(TESTRUNS)
 
-%.o : %.c %.h
-	$(CC) $(CFLAGS) -c $*.c -o $*.o
 
-%.dSYM : % 
-	dsymutil $* -o $*.dSYM
-
-clean:
-	rm -rf $(OBJECTS) 
-	rm -rf $(OTHERCLEANING) 
-	rm -rf $(TESTCLEAN)
-
-%Test : %.o %Test.c %Test.h $(TESTUTILITIES)
-	$(CC) $(CFLAGS) $(LDLIBS) $*Test.c $*.o $(TESTUTILITIES) -o $*Test
-
-%TestRun : %Test
+%-runTest: %Test
 	./$*Test $(TESTFLAGS)
 
-%TestRunValgrind : %Test $(TESTDSYMS)
-	valgrind $(VALGRINDFLAGS) $*Test
+%-runTestVlgd: %Test %Test.dSYM
+	valgrind $(VLGDFLAGS) %*Test
 
 wc:
 	wc -l *.c *.h | grep total
 
-show-log:
-	if [ -f snake.log ]; then less snake.log; fi
+top:
+	top -pid `ps -el | grep snake | grep -v grep | awk '{print $$2}'`
 
-show-valgrind:
-	if [ -f valgrind.log ]; then less valgrind.log; fi
+clean:
+	@rm -f $(OBJECTS) $(TESTOBJECTS) # the object files
+	@rm -f $(BIN) $(TESTBINS) # binary files
+	@rm -f $(OTHERCLEANING) # other stuff
+	@rm -f $(DEPS) $(TESTDEPS) # dependencies
+	@rm -rf $(DSYMS) # debugging info
 
-debug: snake.dSYM
-	cgdb -p `ps -el | grep snake | grep -v grep | awk '{print $$2}'`
+%.dSYM : % 
+	dsymutil $* -o $*.dSYM
+
+%.o : %.c
+	$(COMPILE.c) -MD -o $@ $<
+	@cp $*.d $*.P; \
+		sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+		-e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $*.P; \
+		rm -f $*.d
+
+%Test: %.o %Test.o $(TESTOBJECTS) mlog.o
+	$(CC) $(CFLAGS) $(TESTLIBS) $*Test.o $*.o -o $@
+
+-include $(DEPS)
+-include $(TESTDEPS)
