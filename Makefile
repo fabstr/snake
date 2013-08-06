@@ -2,8 +2,8 @@
 
 # the source files
 SRCS = main.c snake.c highscore.c segment.c colors.c draw.c board.c \
-       cmdlineargs.c position.c mlog.c 
-TESTSRCS = highscoreTest.c stackTest.c cmdlineargsTest.c
+       position.c mlog.c 
+TESTSRCS = highscoreTest.c stackTest.c 
 
 # the compiler flags
 CFLAGS = -g -O0 -Wall

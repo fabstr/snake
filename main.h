@@ -15,7 +15,6 @@
 #include "colors.h"
 #include "draw.h"
 #include "board.h"
-#include "cmdlineargs.h"
 
 #ifndef MAIN_H
 #define MAIN_H
