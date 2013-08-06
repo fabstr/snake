@@ -12,3 +12,4 @@ snakehighscore
 valgrind.log
 snake.log
 html/*
+*.P

@@ -2,6 +2,8 @@
 
 int main(int argc, char **argv) 
 {
+	Options o = parseOptions(argc, argv);
+
 	/* for when the window is resized */
 	/*signal(SIGWINCH, resizeBoard);*/
 
@@ -12,13 +14,29 @@ int main(int argc, char **argv)
 		endwin();
 		fprintf(stderr, "The terminal window needs to be at least 41");
 		fprintf(stderr, " chars wide and 6 lines high.\n");
-		return 1;
+		exit(EXIT_FAILURE);
 	} 
 	Board *b = initGame(COLS, LINES);
 	if (b == NULL) {
 		endwin();
 		fprintf(stderr, "Could not initialize the board.\n");
-		return 1;
+		exit(EXIT_FAILURE);
+	}
+
+	if (o.remote.set == true) {
+		mlog("opening connection at %s", o.port.argument);
+		b->listenConnection = openListenConnection(o.port.argument);
+		if (b->listenConnection == NULL) {
+			fprintf(stderr, "Could not open socket to listen: %s",
+					strerror(errno));
+			exit(EXIT_FAILURE);
+		}
+		b->remote = true;
+		mlog("connection opened");
+	} else {
+		mlog("local steering");
+		b->listenConnection = NULL;
+		b->remote = false;
 	}
 
 	/* the game loop */
@@ -30,6 +48,9 @@ int main(int argc, char **argv)
 	/* memory deallocation */
 	freeSnake(b->snake);
 	freeHighscoreTable(b->highscore);
+	if (b->listenConnection != NULL) {
+		freeConnection(b->listenConnection);
+	}
 	free(b);
 
 	/* pass through the exit status */
@@ -179,7 +200,6 @@ void lose(Board *b, State *GameState)
 int gameLoop(Board *b) 
 {
 	State GameState = PLAYING;
-
 	while (true) {
 		/* check if the window is resized */
 		/*if (windowIsResized == true) {*/
@@ -187,8 +207,14 @@ int gameLoop(Board *b)
 			/*setBoardWidthHeight(b, COLS, LINES-2);*/
 		/*}*/
 
-		/* get input from user */
-		getInput(b, &GameState);
+		if (b->remote == true) {
+			/* listen for an INPUT message */
+			getNetworkInput(b->snake, b->listenConnection, 
+					&GameState);
+		} else {
+			/* get local from user */
+			getLocalInput(b->snake, &GameState);
+		}
 
 		switch (GameState) {
 			case PLAYING:

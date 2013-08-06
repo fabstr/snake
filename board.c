@@ -34,53 +34,6 @@ bool headIsOutOfBoard(Board *b)
 	return false;
 }
 
-void getInput(Board *b, State *GameState) {
-	/* save the old direction */
-	b->snake->previousDirection = b->snake->direction;
-
-	/* get the new direction */
-	int ch = getch();
-	switch (ch) {
-		case 'a': 
-		case KEY_LEFT:
-			if (b->snake->direction != RIGHT) {
-				b->snake->direction = LEFT;
-			}
-			break;
-		case 'd': 
-		case KEY_RIGHT:
-			if (b->snake->direction != LEFT) {
-				b->snake->direction = RIGHT;
-			}
-			break;
-		case 's': 
-		case KEY_DOWN:
-			if (b->snake->direction != UP) {
-				b->snake->direction = DOWN;
-			}
-			break;
-		case 'w': 
-		case KEY_UP:
-			if (b->snake->direction != DOWN) {
-				b->snake->direction = UP;
-			}
-			break;
-		case 'p':
-			*GameState = (*GameState == PAUSED) ? PLAYING : PAUSED;
-			break;
-		case 'h':
-			*GameState = (*GameState == HELP) ? PLAYING : HELP;
-			break;
-		case 'q':
-			*GameState = QUIT;
-			break;
-		case 't':
-			*GameState = (*GameState == HIGHSCORE) ?
-				PLAYING : HIGHSCORE;
-			break;
-	}
-}
-
 void update(Board *b)
 {
 	checkForFood(b);

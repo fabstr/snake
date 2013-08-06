@@ -1,13 +1,11 @@
-#include "snake.h"
 #include "segment.h"
 #include "highscore.h"
+#include "snake.h"
+#include "state.h"
+#include "protocol.h"
 
 #ifndef BOARD_H
 #define BOARD_H
-
-/* the game states */
-enum State {PLAYING, PAUSED, HELP, QUIT, HIGHSCORE};
-typedef enum State State;
 
 /**
  * The playing board keeps track of the snake, the segments and the food 
@@ -25,6 +23,10 @@ typedef struct Board {
 	struct Segment foodSegment;
 
 	HighscoreTable *highscore;
+
+	bool remote;
+	
+	Connection *listenConnection;
 } Board;
 
 /**
@@ -42,12 +44,6 @@ void generateFood(Board *b);
  * @return True if the head hits the border, else false.
  */
 bool headIsOutOfBoard(Board *b);
-
-/**
- * Update the moving direction, according to the result of getch().
- * @param b The board to update on.
- */
-void getInput(Board *b, State *GameState);
 
 /**
  * Update the game board.
@@ -74,5 +70,4 @@ void resetGame(Board *b);
  * @param b The board to check on
  */
 void checkForFood(Board *b);
-
 #endif

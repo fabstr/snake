@@ -6,6 +6,8 @@
 #include "colors.h"
 #include "mlog.h"
 #include "queue.h"
+#include "state.h"
+#include "protocol.h"
 
 #ifndef SNAKE_H
 #define SNAKE_H
@@ -13,7 +15,7 @@
 /* the directions the snake can move */
 enum Directions {LEFT, RIGHT, UP, DOWN};
 
-typedef struct Snake {
+typedef struct {
 	/* the snake's head */
 	struct Segment head;
 
@@ -106,4 +108,27 @@ int createHead(struct Segment *head, int y, int x);
  * @param s The snake to move.
  */
 void updateSnake(Snake *s);
+
+/**
+ * Set the snake's direction. 
+ * It will be checked the snake isn't moved backwards, (cant go left if going
+ * right etc)
+ * @param s The snake
+ * @param d The direction to set
+ */
+void setSnakeDirection(Snake *s, enum Directions d);
+
+/**
+ * Update the moving direction, according to the result of getch().
+ * @param s The snake to update
+ * @param GameState The current game state
+ */
+void getLocalInput(Snake *s, State *GameState);
+
+/**
+ * Like getLocalInput, but listen for INPUT messages on the given connection.
+ * @param s The snake to update
+ * @param c The connection to listen on
+ */
+void getNetworkInput(Snake *s, Connection *c, State *GameState);
 #endif

@@ -190,3 +190,96 @@ void updateSnake(Snake *s)
 	moveSnake(s, s->direction);
 	destroyOldBodySegments(s);
 }
+
+void setSnakeDirection(Snake *s, enum Directions d)
+{
+	/* save the old direction */
+	s->previousDirection = s->direction;
+
+	switch (d) {
+	case LEFT:
+		if (s->direction != RIGHT) {
+			s->direction = LEFT;
+		}
+		break;
+	case RIGHT:
+		if (s->direction != LEFT) {
+			s->direction = RIGHT;
+		}
+		break;
+	case DOWN:
+		if (s->direction != UP) {
+			s->direction = DOWN;
+		}
+		break;
+
+	case UP:
+		if (s->direction != DOWN) {
+			s->direction = UP;
+		}
+		break;
+	}
+}
+
+void getLocalInput(Snake *s, State *GameState)
+{
+
+	/* get the new direction */
+	int ch = getch();
+	switch (ch) {
+		case 'a': 
+		case KEY_LEFT:
+			setSnakeDirection(s, LEFT);
+			break;
+		case 'd': 
+		case KEY_RIGHT:
+			setSnakeDirection(s, RIGHT);
+			break;
+		case 's': 
+		case KEY_DOWN:
+			setSnakeDirection(s, DOWN);
+			break;
+		case 'w': 
+		case KEY_UP:
+			setSnakeDirection(s, UP);
+			break;
+		case 'p':
+			*GameState = (*GameState == PAUSED) ? PLAYING : PAUSED;
+			break;
+		case 'h':
+			*GameState = (*GameState == HELP) ? PLAYING : HELP;
+			break;
+		case 'q':
+			*GameState = QUIT;
+			break;
+		case 't':
+			*GameState = (*GameState == HIGHSCORE) ?
+				PLAYING : HIGHSCORE;
+			break;
+	}
+}
+
+void getNetworkInput(Snake *s, Connection *c, State *GameState)
+{
+	Message *m = listenForMessage(c);
+	char messageContent[m->length];
+	sscanf(m->msg, "INPUT %s", messageContent);
+
+	if (strcmp("up", messageContent) == 0) {
+		setSnakeDirection(s, UP);
+	} else if (strcmp("down", messageContent) == 0) {
+		setSnakeDirection(s, DOWN);
+	} else if (strcmp("left", messageContent) == 0) {
+		setSnakeDirection(s, LEFT);
+	} else if (strcmp("right", messageContent) == 0) {
+		setSnakeDirection(s, RIGHT);
+	} else if (strcmp("pause", messageContent) == 0) {
+		*GameState = (*GameState == PAUSED) ? PLAYING : PAUSED;
+	} else if (strcmp("highscore", messageContent) == 0) {
+		*GameState = (*GameState == HIGHSCORE) ?  PLAYING : HIGHSCORE;
+	} else if (strcmp("quit", messageContent) == 0) {
+		*GameState = QUIT;
+	} else if (strcmp("help", messageContent) == 0) {
+		*GameState = (*GameState == HELP) ? PLAYING : HELP;
+	}
+}

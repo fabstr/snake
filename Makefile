@@ -1,8 +1,8 @@
 .PHONY: all run test run-tests wc top clean
 
 # the source files
-SRCS = main.c snake.c highscore.c segment.c colors.c draw.c board.c \
-       position.c mlog.c 
+SRCS = main.c snake.c highscore.c segment.c draw.c board.c position.c \
+       mlog.c cmdlineargs.c protocol.c
 TESTSRCS = highscoreTest.c stackTest.c 
 
 # the compiler flags
@@ -12,6 +12,7 @@ CFLAGS = -g -O0 -Wall
 LDLIBS = -lncurses
 
 # the c99 compiler
+#CC = gcc -std=c99
 CC = clang
 
 # the output file
