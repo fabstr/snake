@@ -33,6 +33,7 @@ int main(int argc, char **argv)
 		}
 		b->remote = true;
 		mlog("connection opened");
+		/*init_ai(b);*/
 	} else {
 		mlog("local steering");
 		b->listenConnection = NULL;

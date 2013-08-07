@@ -16,6 +16,7 @@
 #include "draw.h"
 #include "board.h"
 #include "cmdlineargs.h"
+#include "ai.h"
 
 #ifndef MAIN_H
 #define MAIN_H
