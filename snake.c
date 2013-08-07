@@ -68,8 +68,7 @@ void drawSnakeHead(Snake *s)
 			break;
 		case DOWN:
 			headChar = ACS_DARROW;
-			break;
-	}
+			break; }
 
 	move(s->head.p.row, s->head.p.column);
 	addch(headChar | s->head.color_pair);
@@ -136,37 +135,39 @@ void addSegmentAtHeadsPosition(Snake *s)
 
 	/* give the segment a correct drawing character (curses corners/lines) 
 	 */
-	if (s->direction != s->previousDirection) {
-		/* the snake is changing direction */
-		if (s->previousDirection == RIGHT && s->direction == DOWN) {
-			seg->drawingCharacter = ACS_URCORNER;
-		} else if (s->previousDirection == RIGHT && s->direction 
-				== UP) {
-			seg->drawingCharacter = ACS_LRCORNER;
-		} else if (s->previousDirection == DOWN && s->direction 
-				== RIGHT) {
-			seg->drawingCharacter = ACS_LLCORNER;
-		} else if (s->previousDirection == DOWN && s->direction
-				== LEFT) {
-			seg->drawingCharacter = ACS_LRCORNER;
-		} else if (s->previousDirection == LEFT && s->direction 
-				== UP) {
-			seg->drawingCharacter = ACS_LLCORNER;
-		} else if (s->previousDirection == LEFT && s->direction 
-				== DOWN) {
-			seg->drawingCharacter = ACS_ULCORNER;
-		} else if (s->previousDirection == UP && s->direction 
-				== LEFT) {
-			seg->drawingCharacter = ACS_URCORNER;
-		} else if (s->previousDirection == UP && s->direction 
-				== RIGHT) {
-			seg->drawingCharacter = ACS_ULCORNER;
-		}
-	} else if (s->direction == UP || s->direction == DOWN) {
-		seg->drawingCharacter = ACS_VLINE;
-	} else if (s->direction == LEFT || s->direction == RIGHT) {
-		seg->drawingCharacter = ACS_HLINE;
-	}
+	/*if (s->direction != s->previousDirection) {*/
+		/*[> the snake is changing direction <]*/
+		/*if (s->previousDirection == RIGHT && s->direction == DOWN) {*/
+			/*seg->drawingCharacter = ACS_URCORNER;*/
+		/*} else if (s->previousDirection == RIGHT && s->direction */
+				/*== UP) {*/
+			/*seg->drawingCharacter = ACS_LRCORNER;*/
+		/*} else if (s->previousDirection == DOWN && s->direction */
+				/*== RIGHT) {*/
+			/*seg->drawingCharacter = ACS_LLCORNER;*/
+		/*} else if (s->previousDirection == DOWN && s->direction*/
+				/*== LEFT) {*/
+			/*seg->drawingCharacter = ACS_LRCORNER;*/
+		/*} else if (s->previousDirection == LEFT && s->direction */
+				/*== UP) {*/
+			/*seg->drawingCharacter = ACS_LLCORNER;*/
+		/*} else if (s->previousDirection == LEFT && s->direction */
+				/*== DOWN) {*/
+			/*seg->drawingCharacter = ACS_ULCORNER;*/
+		/*} else if (s->previousDirection == UP && s->direction */
+				/*== LEFT) {*/
+			/*seg->drawingCharacter = ACS_URCORNER;*/
+		/*} else if (s->previousDirection == UP && s->direction */
+				/*== RIGHT) {*/
+			/*seg->drawingCharacter = ACS_ULCORNER;*/
+		/*}*/
+	/*} else if (s->direction == UP || s->direction == DOWN) {*/
+		/*seg->drawingCharacter = ACS_VLINE;*/
+	/*} else if (s->direction == LEFT || s->direction == RIGHT) {*/
+		/*seg->drawingCharacter = ACS_HLINE;*/
+	/*}*/
+
+	seg->drawingCharacter = 'o';
 
 	/* add the segment */
 	TAILQ_INSERT_HEAD(s->body, seg, segments);
@@ -194,7 +195,7 @@ void updateSnake(Snake *s)
 void setSnakeDirection(Snake *s, enum Directions d)
 {
 	/* save the old direction */
-	s->previousDirection = s->direction;
+	/*s->previousDirection = s->direction;*/
 
 	switch (d) {
 	case LEFT:
@@ -223,7 +224,6 @@ void setSnakeDirection(Snake *s, enum Directions d)
 
 void getLocalInput(Snake *s, State *GameState)
 {
-
 	/* get the new direction */
 	int ch = getch();
 	switch (ch) {
@@ -261,7 +261,9 @@ void getLocalInput(Snake *s, State *GameState)
 
 void getNetworkInput(Snake *s, Connection *c, State *GameState)
 {
+	mlog("getting network input");
 	Message *m = listenForMessage(c);
+	mlog("got '%s'", m->msg);
 	char messageContent[m->length];
 	sscanf(m->msg, "INPUT %s", messageContent);
 
@@ -281,5 +283,13 @@ void getNetworkInput(Snake *s, Connection *c, State *GameState)
 		*GameState = QUIT;
 	} else if (strcmp("help", messageContent) == 0) {
 		*GameState = (*GameState == HELP) ? PLAYING : HELP;
+	}
+}
+
+void increaseLength(Snake *s)
+{
+	struct Segment *currSeg;
+	TAILQ_FOREACH(currSeg, s->body, segments) {
+		currSeg->lifeTicks += s->segmentLife;
 	}
 }

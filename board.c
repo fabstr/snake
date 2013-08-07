@@ -76,7 +76,7 @@ void checkForFood(Board *b)
 		 *  - create more food*/
 		b->snake->score++;
 		b->snake->segmentLivingTime += b->snake->segmentLife;
-		addSegmentAtHeadsPosition(b->snake);
+		increaseLength(b->snake);
 		generateFood(b);
 	}
 }

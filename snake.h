@@ -131,4 +131,6 @@ void getLocalInput(Snake *s, State *GameState);
  * @param c The connection to listen on
  */
 void getNetworkInput(Snake *s, Connection *c, State *GameState);
+
+void increaseLength(Snake *s);
 #endif
