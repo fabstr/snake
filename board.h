@@ -3,6 +3,7 @@
 #include "snake.h"
 #include "state.h"
 #include "protocol.h"
+#include "ai.h"
 
 #ifndef BOARD_H
 #define BOARD_H
@@ -27,6 +28,9 @@ typedef struct Board {
 	bool remote;
 	
 	Connection *listenConnection;
+
+	bool ai;
+	/**< @brief if true, run ai instead of input from a human */
 } Board;
 
 /**

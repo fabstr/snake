@@ -7,21 +7,26 @@ Options parseOptions(int argc, char **argv)
 
 	int ch;
 	static struct option longopts[] = {
-		{"remote", optional_argument, NULL, 'r'},
-		{"port", required_argument, NULL, 'p'}
+		{"remote", no_argument, NULL, 'r'},
+		{"port", required_argument, NULL, 'p'},
+		{"ai", no_argument, NULL, 'a'}
 	};
 
 	bool failure = false;
-	while ((ch = getopt_long(argc, argv, "rp:", longopts, NULL)) 
+	while ((ch = getopt_long(argc, argv, "rap:", longopts, NULL)) 
 			!= -1) {
 		switch (ch) {
 			case 'r':
-				o.remote.argument = optarg;
+				o.remote.argument = NULL;
 				o.remote.set = true;
 				break;				
 			case 'p':
 				o.port.argument = optarg;
 				o.port.set = true;
+				break;
+			case 'a':
+				o.ai.argument = NULL;
+				o.ai.set = true;
 				break;
 			case '?':
 			default:
@@ -46,6 +51,7 @@ void printHelp()
 	printf("Help:\n");
 	printf("  -r listen on a socket for movement messages\n");
 	printf("  -p the port to listen on\n");
+	printf("  -a run the ai\n");
 }
 
 void resetOptions(Options *o)

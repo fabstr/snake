@@ -28,6 +28,9 @@ typedef struct Options {
 
 	Option port;
 	/**< @brief The port to listen on */
+
+	Option ai;
+	/**< @brief let ai control instead of a human */
 } Options;
 
 /* the default port */

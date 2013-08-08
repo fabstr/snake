@@ -33,12 +33,13 @@ int main(int argc, char **argv)
 		}
 		b->remote = true;
 		mlog("connection opened");
-		/*init_ai(b);*/
 	} else {
 		mlog("local steering");
 		b->listenConnection = NULL;
 		b->remote = false;
 	}
+	
+	b->ai = o.ai.set;
 
 	/* the game loop */
 	int toReturn = gameLoop(b);
@@ -160,6 +161,8 @@ int getTextInput(char *msg, char *dest, size_t bufflen)
 
 void lose(Board *b, State *GameState)
 {
+	mlog("score: %d", b->snake->score);
+
 	/* get the lowest score, the last one in the records array */
 	int lowestScore = b->highscore->records[b->highscore->count-1].score;
 
@@ -213,8 +216,13 @@ int gameLoop(Board *b)
 			getNetworkInput(b->snake, b->listenConnection, 
 					&GameState);
 		} else {
-			/* get local from user */
-			getLocalInput(b->snake, &GameState);
+			if (b->ai) {
+				getAiInput(b->snake, &b->foodSegment, b->width,
+						b->height);
+			} else {
+				/* get local from a human */
+				getLocalInput(b->snake, &GameState);
+			}
 		}
 
 		switch (GameState) {

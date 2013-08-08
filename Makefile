@@ -2,7 +2,7 @@
 
 # the source files
 SRCS = main.c snake.c highscore.c segment.c draw.c board.c position.c \
-       mlog.c cmdlineargs.c protocol.c
+       mlog.c cmdlineargs.c protocol.c ai.c
 TESTSRCS = highscoreTest.c stackTest.c 
 
 # the compiler flags

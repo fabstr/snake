@@ -23,6 +23,7 @@
 
 /* the time the loop sleeps between the iterations, micro seconds */
 static int SleepingTime = 100 * 1000;
+//static int SleepingTime = 1;
 
 /* set to true when the window is resized */
 /*static bool windowIsResized = false;*/
