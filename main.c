@@ -34,13 +34,18 @@ int main(int argc, char **argv)
 		b->remote = true;
 		mlog("connection opened");
 	} else {
-		mlog("local steering");
-		b->listenConnection = NULL;
-		b->remote = false;
+		if (o.ai.set == true) {
+			mlog("ai steering");
+			b->ai = true;
+			init_ai(b->width, b->height);
+		} else {
+			mlog("local human steering");
+			b->ai = false;
+			b->listenConnection = NULL;
+			b->remote = false;
+		}
 	}
 	
-	b->ai = o.ai.set;
-
 	/* the game loop */
 	int toReturn = gameLoop(b);
 
@@ -164,7 +169,12 @@ void lose(Board *b, State *GameState)
 	mlog("score: %d", b->snake->score);
 
 	/* get the lowest score, the last one in the records array */
-	int lowestScore = b->highscore->records[b->highscore->count-1].score;
+	int lowestScore;
+	if (b->highscore->count >= 10) {
+		lowestScore = b->highscore->records[9].score;
+	} else {
+		lowestScore = b->highscore->records[b->highscore->count-1].score;
+	}
 
 	if (lowestScore < b->snake->score) {
 		/* get the name */
@@ -193,10 +203,22 @@ void lose(Board *b, State *GameState)
 			.timestamp = (long)time(NULL), .playerName=name};
 		insertRecordAndSort(&r, b->highscore);
 		*GameState = HIGHSCORE;
+		free(text);
 	} else {
+		char **text = (char **) malloc(2*sizeof(char **));
+		text[0] = "                    YOU LOST!                 ";
+		text[1] = "           Press space to continue.           ";
 
+		drawTextWindowInMiddle(text, 2);
+		refresh();
+
+		char c;
+		while ((c = getch()) != ' ') {
+			usleep(10000);
+		}
+
+		free(text);
 	}
-
 
 	resetGame(b);
 }
@@ -217,8 +239,7 @@ int gameLoop(Board *b)
 					&GameState);
 		} else {
 			if (b->ai) {
-				getAiInput(b->snake, &b->foodSegment, b->width,
-						b->height);
+				getAiInput(b->snake, &b->foodSegment);
 			} else {
 				/* get local from a human */
 				getLocalInput(b->snake, &GameState);
@@ -226,20 +247,20 @@ int gameLoop(Board *b)
 		}
 
 		switch (GameState) {
-			case PLAYING:
-				/* update the game */
-				update(b);
-				/* check if the player has lost, this function
-				 * also handles the food */
-				if (hasPlayerLost(b) == true) {
-					lose(b, &GameState);
-				}
-				break;
-			case QUIT:
-				endwin();
-				return 0;
-			default:
-				break;
+		case PLAYING:
+			/* update the game */
+			update(b);
+			/* check if the player has lost, this function
+			 * also handles the food */
+			if (hasPlayerLost(b) == true) {
+				lose(b, &GameState);
+			}
+			break;
+		case QUIT:
+			endwin();
+			return 0;
+		default:
+			break;
 
 		}
 
