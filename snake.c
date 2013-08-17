@@ -10,18 +10,18 @@ void moveSnake(Snake *s, enum Directions d)
 
 	/* move the head */
 	switch (d) {
-		case LEFT:
-			s->head.p.column--;
-			break;
-		case UP:
-			s->head.p.row--;
-			break;
-		case RIGHT:
-			s->head.p.column++;
-			break;
-		case DOWN:
-			s->head.p.row++;
-			break;
+	case LEFT:
+		s->head.p.column--;
+		break;
+	case UP:
+		s->head.p.row--;
+		break;
+	case RIGHT:
+		s->head.p.column++;
+		break;
+	case DOWN:
+		s->head.p.row++;
+		break;
 	}
 }
 
@@ -57,18 +57,18 @@ void drawSnakeHead(Snake *s)
 	/* draw the head */
 	int headChar;
 	switch (s->direction) {
-		case LEFT:
-			headChar = ACS_LARROW;
-			break;
-		case RIGHT:
-			headChar = ACS_RARROW;
-			break;
-		case UP:
-			headChar = ACS_UARROW;
-			break;
-		case DOWN:
-			headChar = ACS_DARROW;
-			break; }
+	case LEFT:
+		headChar = ACS_LARROW;
+		break;
+	case RIGHT:
+		headChar = ACS_RARROW;
+		break;
+	case UP:
+		headChar = ACS_UARROW;
+		break;
+	case DOWN:
+		headChar = ACS_DARROW;
+		break; }
 
 	move(s->head.p.row, s->head.p.column);
 	addch(headChar | s->head.color_pair);
@@ -99,6 +99,7 @@ void freeSnake(Snake *s)
 		free(currSeg);
 	}
 	free(TAILQ_FIRST(s->body));
+	free(s->body);
 
 	/* and the snake */
 	free(s);
@@ -135,39 +136,39 @@ void addSegmentAtHeadsPosition(Snake *s)
 
 	/* give the segment a correct drawing character (curses corners/lines) 
 	 */
-	/*if (s->direction != s->previousDirection) {*/
-		/*[> the snake is changing direction <]*/
-		/*if (s->previousDirection == RIGHT && s->direction == DOWN) {*/
-			/*seg->drawingCharacter = ACS_URCORNER;*/
-		/*} else if (s->previousDirection == RIGHT && s->direction */
-				/*== UP) {*/
-			/*seg->drawingCharacter = ACS_LRCORNER;*/
-		/*} else if (s->previousDirection == DOWN && s->direction */
-				/*== RIGHT) {*/
-			/*seg->drawingCharacter = ACS_LLCORNER;*/
-		/*} else if (s->previousDirection == DOWN && s->direction*/
-				/*== LEFT) {*/
-			/*seg->drawingCharacter = ACS_LRCORNER;*/
-		/*} else if (s->previousDirection == LEFT && s->direction */
-				/*== UP) {*/
-			/*seg->drawingCharacter = ACS_LLCORNER;*/
-		/*} else if (s->previousDirection == LEFT && s->direction */
-				/*== DOWN) {*/
-			/*seg->drawingCharacter = ACS_ULCORNER;*/
-		/*} else if (s->previousDirection == UP && s->direction */
-				/*== LEFT) {*/
-			/*seg->drawingCharacter = ACS_URCORNER;*/
-		/*} else if (s->previousDirection == UP && s->direction */
-				/*== RIGHT) {*/
-			/*seg->drawingCharacter = ACS_ULCORNER;*/
-		/*}*/
-	/*} else if (s->direction == UP || s->direction == DOWN) {*/
-		/*seg->drawingCharacter = ACS_VLINE;*/
-	/*} else if (s->direction == LEFT || s->direction == RIGHT) {*/
-		/*seg->drawingCharacter = ACS_HLINE;*/
-	/*}*/
+	if (s->direction != s->previousDirection) {
+		/* the snake is changing direction */
+		if (s->previousDirection == RIGHT && s->direction == DOWN) {
+			seg->drawingCharacter = ACS_URCORNER;
+		} else if (s->previousDirection == RIGHT && s->direction
+				== UP) {
+			seg->drawingCharacter = ACS_LRCORNER;
+		} else if (s->previousDirection == DOWN && s->direction
+				== RIGHT) {
+			seg->drawingCharacter = ACS_LLCORNER;
+		} else if (s->previousDirection == DOWN && s->direction
+				== LEFT) {
+			seg->drawingCharacter = ACS_LRCORNER;
+		} else if (s->previousDirection == LEFT && s->direction
+				== UP) {
+			seg->drawingCharacter = ACS_LLCORNER;
+		} else if (s->previousDirection == LEFT && s->direction
+				== DOWN) {
+			seg->drawingCharacter = ACS_ULCORNER;
+		} else if (s->previousDirection == UP && s->direction
+				== LEFT) {
+			seg->drawingCharacter = ACS_URCORNER;
+		} else if (s->previousDirection == UP && s->direction
+				== RIGHT) {
+			seg->drawingCharacter = ACS_ULCORNER;
+		}
+	} else if (s->direction == UP || s->direction == DOWN) {
+		seg->drawingCharacter = ACS_VLINE;
+	} else if (s->direction == LEFT || s->direction == RIGHT) {
+		seg->drawingCharacter = ACS_HLINE;
+	}
 
-	seg->drawingCharacter = 'o';
+	/*seg->drawingCharacter = 'o';*/
 
 	/* add the segment */
 	TAILQ_INSERT_HEAD(s->body, seg, segments);
@@ -190,12 +191,13 @@ void updateSnake(Snake *s)
 	addSegmentAtHeadsPosition(s);
 	moveSnake(s, s->direction);
 	destroyOldBodySegments(s);
+	s->previousDirection = s->direction;
 }
 
 void setSnakeDirection(Snake *s, enum Directions d)
 {
 	/* save the old direction */
-	/*s->previousDirection = s->direction;*/
+	s->previousDirection = s->direction;
 
 	switch (d) {
 	case LEFT:
@@ -227,35 +229,30 @@ void getLocalInput(Snake *s, State *GameState)
 	/* get the new direction */
 	int ch = getch();
 	switch (ch) {
-		case 'a': 
-		case KEY_LEFT:
-			setSnakeDirection(s, LEFT);
-			break;
-		case 'd': 
-		case KEY_RIGHT:
-			setSnakeDirection(s, RIGHT);
-			break;
-		case 's': 
-		case KEY_DOWN:
-			setSnakeDirection(s, DOWN);
-			break;
-		case 'w': 
-		case KEY_UP:
-			setSnakeDirection(s, UP);
-			break;
-		case 'p':
-			*GameState = (*GameState == PAUSED) ? PLAYING : PAUSED;
-			break;
-		case 'h':
-			*GameState = (*GameState == HELP) ? PLAYING : HELP;
-			break;
-		case 'q':
-			*GameState = QUIT;
-			break;
-		case 't':
-			*GameState = (*GameState == HIGHSCORE) ?
-				PLAYING : HIGHSCORE;
-			break;
+	case KEY_LEFT:
+		setSnakeDirection(s, LEFT);
+		break;
+	case KEY_RIGHT:
+		setSnakeDirection(s, RIGHT);
+		break;
+	case KEY_DOWN:
+		setSnakeDirection(s, DOWN);
+		break;
+	case KEY_UP:
+		setSnakeDirection(s, UP);
+		break;
+	case 'p':
+		*GameState = (*GameState == PAUSED) ? PLAYING : PAUSED;
+		break;
+	case 'h':
+		*GameState = (*GameState == HELP) ? PLAYING : HELP;
+		break;
+	case 'q':
+		*GameState = QUIT;
+		break;
+	case 't':
+		*GameState = (*GameState == HIGHSCORE) ?  PLAYING : HIGHSCORE;
+		break;
 	}
 }
 
