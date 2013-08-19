@@ -69,7 +69,7 @@ void drawTextWindowInMiddle(char **text, int nrows)
 	}
 
 	int xpos = COLS/2 - longestLength/2 - 1;
-	int ypos = LINES/2 - nrows/2;
+	int ypos = LINES/2 - nrows/2 - 2;
 
 	/* draw the border */
 	drawBorder(xpos, ypos, xpos+longestLength+1, ypos+nrows+1);
@@ -104,7 +104,7 @@ void drawHighscore(Board *b)
 		Record currRec = b->highscore->records[i];
 
 		/* in the text array we begin at index 1 */
-		asprintf(&text[i+1], "%5d %s", currRec.score, 
+		asprintf(&text[i+1], "%2d. %4d %s", i+1, currRec.score, 
 				currRec.playerName);
 	}
 
@@ -167,20 +167,19 @@ int draw(Board *b, State *GameState)
 
 	char *textarr[2];
 	switch (*GameState) {
-		case HELP:
-			drawHelp();
-			break;
-		case HIGHSCORE:
-			drawHighscore(b);
-			break;
-		case PAUSED:
-			textarr[0] = "The game is paused.";
-			textarr[1] = "Press p to continue.";
-			drawTextWindowInMiddle(textarr, 2);
-			break;
-		case PLAYING: 
-		case QUIT:
-			break;
+	case HELP:
+		drawHelp();
+		break;
+	case HIGHSCORE:
+		drawHighscore(b);
+		break;
+	case PAUSED:
+		textarr[0] = "The game is paused.";
+		textarr[1] = "Press p to continue.";
+		drawTextWindowInMiddle(textarr, 2);
+		break;
+	default:
+		break;
 	}
 
 	/*finally refresh the window and wait some time*/
