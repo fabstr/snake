@@ -1,9 +1,9 @@
+#ifndef TESTING_H
+#define TESTING_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-
-#ifndef TESTING_H
-#define TESTING_H
 
 /**
  * Print a message for a passed test.
