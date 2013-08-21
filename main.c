@@ -45,7 +45,7 @@ int main(int argc, char **argv)
 			b->remote = false;
 		}
 	}
-	
+
 	/* the game loop */
 	int toReturn = gameLoop(b);
 
@@ -206,8 +206,8 @@ void lose(Board *b, State *GameState)
 		free(text);
 	} else {
 		char **text = (char **) malloc(2*sizeof(char **));
-		text[0] = "                    YOU LOST!                 ";
-		text[1] = "           Press space to continue.           ";
+		text[0] = "       YOU LOST!       ";
+		text[1] = "Press space to continue.";
 
 		drawTextWindowInMiddle(text, 2);
 		refresh();
