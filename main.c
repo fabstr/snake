@@ -7,7 +7,6 @@ int main(int argc, char **argv)
 	/* for when the window is resized */
 	/*signal(SIGWINCH, resizeBoard);*/
 
-	/* initialization */
 	initNCurses();
 
 	if (COLS < 41 || LINES < 6) {
@@ -16,6 +15,7 @@ int main(int argc, char **argv)
 		fprintf(stderr, " chars wide and 6 lines high.\n");
 		exit(EXIT_FAILURE);
 	} 
+
 	Board *b = initGame(COLS, LINES);
 	if (b == NULL) {
 		endwin();
@@ -46,10 +46,23 @@ int main(int argc, char **argv)
 		}
 	}
 
-	/* the game loop */
+	if (o.growthSpeed.set != true) {
+		mlog("setting grow speed");
+		o.growthSpeed.argument = "1";
+		o.growthSpeed.set = true;
+	}
+
+	if (o.movementSpeed.set != true) {
+		o.movementSpeed.argument = "1";
+		o.movementSpeed.set = true;
+	}
+
+	b->snake->growthSpeed = atoi(o.growthSpeed.argument);
+	/*b->movementSpeed = atoi(o.movementSpeed.argument);*/
+	mlog("growthspeed = %d", b->snake->growthSpeed);
+
 	int toReturn = gameLoop(b);
 
-	/* update highscore file */
 	writeHighscoreToFile(highscorePath, b->highscore);
 
 	/* memory deallocation */
@@ -60,7 +73,6 @@ int main(int argc, char **argv)
 	}
 	free(b);
 
-	/* pass through the exit status */
 	return toReturn;
 }
 

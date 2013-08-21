@@ -31,6 +31,12 @@ typedef struct Options {
 
 	Option ai;
 	/**< @brief let ai control instead of a human */
+
+	Option growthSpeed;
+	/**< @brief The speed the snake growth with, is 1, 2 or 3. */
+
+	Option movementSpeed;
+	/**< @brief The speed the snake moves with, is 1, 2 or 3. */
 } Options;
 
 /* the default port */

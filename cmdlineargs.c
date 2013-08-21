@@ -9,11 +9,13 @@ Options parseOptions(int argc, char **argv)
 	static struct option longopts[] = {
 		{"remote", no_argument, NULL, 'r'},
 		{"port", required_argument, NULL, 'p'},
-		{"ai", no_argument, NULL, 'a'}
+		{"ai", no_argument, NULL, 'a'},
+		{"growthspeed", required_argument, NULL, 'g'},
+		{"movementspeed", required_argument, NULL, 'm'}
 	};
 
 	bool failure = false;
-	while ((ch = getopt_long(argc, argv, "rap:", longopts, NULL)) 
+	while ((ch = getopt_long(argc, argv, "rap:g:m:", longopts, NULL)) 
 			!= -1) {
 		switch (ch) {
 			case 'r':
@@ -27,6 +29,14 @@ Options parseOptions(int argc, char **argv)
 			case 'a':
 				o.ai.argument = NULL;
 				o.ai.set = true;
+				break;
+			case 'g':
+				o.growthSpeed.argument = optarg;
+				o.growthSpeed.set = true;
+				break;
+			case 'm':
+				o.movementSpeed.argument = optarg;
+				o.movementSpeed.set = true;
 				break;
 			case '?':
 			default:
@@ -49,15 +59,21 @@ Options parseOptions(int argc, char **argv)
 void printHelp() 
 {
 	printf("Help:\n");
-	printf("  -r listen on a socket for movement messages\n");
-	printf("  -p the port to listen on\n");
-	printf("  -a run the ai\n");
+	printf("  -r --remote listen on a socket for movement messages\n");
+	printf("  -p --port the port to listen on\n");
+	printf("  -a --ai run the ai\n");
+	printf("  -g --growthspeed the speed the snake grows with\n");
+	printf("  -m --movementspeed the speed the snake moves with\n");
 }
 
 void resetOptions(Options *o)
 {
-	o->port.argument=NULL;
-	o->port.set=false;
-	o->remote.argument=NULL;
-	o->remote.set=false;
+	o->port.argument = NULL;
+	o->port.set = false;
+	o->remote.argument = NULL;
+	o->remote.set = false;
+	o->growthSpeed.argument = NULL;
+	o->growthSpeed.set = false;
+	o->movementSpeed.argument = NULL;
+	o->movementSpeed.set = false;
 }

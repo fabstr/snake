@@ -19,19 +19,20 @@ typedef struct {
 	/* the snake's head */
 	struct Segment head;
 
-	/* the body, a tailq of segments */
+	/* the body, a tail queue of segments */
 	TAILQ_HEAD(snakebody, Segment);
 	struct snakebody *body;
 
 	/* the latest non-occupied position in the segments array */
 	int segPos;
 
-	/* the time each segment in this snake should live */
-	int segmentLife;
+	/* the speed the snake grows with */
+	int growthSpeed;
 
 	enum Directions direction;
 	enum Directions previousDirection;
 
+	/* the time each segment lives */
 	long segmentLivingTime;
 
 	int score;

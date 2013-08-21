@@ -30,7 +30,7 @@ void destroyOldBodySegments(Snake *s)
 	struct Segment *currSeg, *currSegTmp;
 	TAILQ_FOREACH_SAFE(currSeg, s->body, segments, currSegTmp) {
 		/* first decrease the life */
-		currSeg->lifeTicks -= s->segmentLife;
+		currSeg->lifeTicks -= s->growthSpeed;
 
 		if (currSeg->lifeTicks <= 0) {
 			/* the segment should die */
@@ -70,8 +70,7 @@ void drawSnakeHead(Snake *s)
 		headChar = ACS_DARROW;
 		break; }
 
-	move(s->head.p.row, s->head.p.column);
-	addch(headChar | s->head.color_pair);
+	mvaddch(s->head.p.row, s->head.p.column, headChar | s->head.color_pair);
 }
 
 Snake *newSnake(int y, int x)
@@ -83,7 +82,7 @@ Snake *newSnake(int y, int x)
 	s->previousDirection = UP;
 	s->segmentLivingTime = 0;
 	s->score = 0;
-	s->segmentLife = 10;
+	s->growthSpeed = 10;
 
 	createHead(&s->head, y, x);
 
@@ -129,7 +128,7 @@ void addSegmentAtHeadsPosition(Snake *s)
 	/* construct the segment */
 	seg->p.row = s->head.p.row;
 	seg->p.column = s->head.p.column;
-	seg->lifeTicks = s->segmentLife + s->segmentLivingTime;
+	seg->lifeTicks = s->growthSpeed + s->segmentLivingTime;
 	seg->blocking = true;
 	seg->type = BODY;
 	seg->color_pair = COLOR_PAIR(BODY_COLOR);
@@ -287,6 +286,6 @@ void increaseLength(Snake *s)
 {
 	struct Segment *currSeg;
 	TAILQ_FOREACH(currSeg, s->body, segments) {
-		currSeg->lifeTicks += s->segmentLife;
+		currSeg->lifeTicks += s->growthSpeed*s->growthSpeed;
 	}
 }
