@@ -1,12 +1,12 @@
-.PHONY: all run test run-tests wc top clean
+.PHONY: all run test run-tests wc top clean aitest
 
 # the source files
 SRCS = main.c snake.c highscore.c segment.c draw.c board.c position.c \
-       mlog.c cmdlineargs.c protocol.c ai.c
-TESTSRCS = highscoreTest.c stackTest.c 
+       mlog.c cmdlineargs.c protocol.c ai.c bheap.c astar.c
+TESTSRCS = highscoreTest.c stackTest.c bheapTest.c
 
 # the compiler flags
-CFLAGS = -g -O0 -Wall
+CFLAGS = -g -O0 -Wall 
 
 # the libraries used
 LDLIBS = -lncurses
@@ -19,7 +19,7 @@ CC = clang
 BIN = snake
 
 # the test output files
-TESTBINS = highscoreTest cmdlineargsTest
+TESTBINS = highscoreTest bheapTest
 
 # other files to clean
 OTHERCLEANING = snake.log highscore-test.txt valgrind.log
@@ -34,7 +34,7 @@ TESTDEPS = $(TESTSRCS:.c=.P)
 # to run the tests
 TESTRUNS = $(TESTBINS:Test=-runTest)
 TESTFLAGS = --show-passed=yes
-TESTLIBS = mlog.o
+TESTLIBS = mlog.o testing.o
 
 # the valgrind flags
 VLGDFLAGS = --leak-check=full --log-file=valgrind.log --track-origins=yes 
@@ -65,7 +65,7 @@ run-tests-valgrind: $(TESTRUNS)
 	valgrind $(VLGDFLAGS) %*Test
 
 wc:
-	wc -l *.c *.h | grep total
+	@wc -l *.c *.h | grep -i -v -e tree.h -e queue.h -e total | awk '{print $$1}' | awk '{sum += $$1} END {print sum " total"}'
 
 top:
 	echo  -pid `ps -el | grep snake | grep -v grep | awk '{print $$2}'`
@@ -87,8 +87,12 @@ clean:
 		-e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $*.P; \
 		rm -f $*.d
 
-%Test: %.o %Test.o $(TESTOBJECTS) mlog.o
+%Test: %.o %Test.o $(TESTLIBS)
 	$(CC) $(CFLAGS) $(TESTLIBS) $*Test.o $*.o -o $@
 
+aitest: all
+	rm -f snake.log
+	valgrind snake -a
+	vless snake.log
 -include $(DEPS)
 -include $(TESTDEPS)

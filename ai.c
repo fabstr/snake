@@ -1,184 +1,109 @@
 #include "ai.h"
 
-void init_ai(int boardWidth, int boardHeight)
+int boardWidth;
+int boardHeight;
+action *nextAction;
+
+void init_ai(int bw, int bh)
 {
+	boardWidth = bw;
+	boardHeight = bh;
+	nextAction = NULL;
 }
 
-void snakeToBoard(Snake *s, int *board, int width)
+void getAiInput(Snake *s, struct Segment *food)
 {
-	struct Segment *currSeg;
-	TAILQ_FOREACH(currSeg, s->body, segments) {
-		int row = currSeg->p.row;
-		int column = currSeg->p.column;
-		board[row*width + column] = currSeg->lifeTicks;
-	}
-}
-
-bool atTurnPosition(Position p, int width, int height)
-{
-	if (p.row == 2 || p.row == height-3 || p.column == 2 ||
-			p.column == width-3) {
-		return true;
-	}
-	
-	return false;
-}
-
-enum TurnPositions getTurnPosition(Position p, int width, int height)
-{
-	if (p.row == 1) {
-		if (p.column == 2) {
-			return TOPLEFT;
-		} else if (p.column == width - 3) {
-			return TOPRIGHT;
-		} else {
-			return TWALL;
-		}
-	} else if (p.row == height - 2) {
-		if (p.column == 2) {
-			return BOTTOMLEFT;
-		} else if (p.column == width - 3) {
-			return BOTTOMRIGHT;
-		} else {
-			return BWALL;
-		}
-	} else if (p.column == 2) {
-		return LWALL;
+	mlog("getting ai input s at row=%d col=%d", s->head.p.row,
+			s->head.p.column);
+	if (nextAction == NULL) {
+		getNewPath(s, food);
 	} else {
-		return RWALL;
-	}
-}
-
-void getAiInput(Snake *s, struct Segment *food, int boardWidth, int boardHeight)
-{
-	/*static SLIST_HEAD(slisthead, action) movestack */
-		/*= SLIST_HEAD_INITIALIZER(movestack);*/
-
-	static int width = -1;
-	static int height = -1;
-	if (width == -1) {
-		width = boardWidth;
-	}
-	if (height == -1) {
-		height = boardHeight;
-	}
-
-	static int *board = NULL;
-	if (board == NULL) {
-		board = (int *) malloc(sizeof(int)*width*height);
-		if (board == NULL) {
-			fprintf(stderr, "Could not allocate memory.\n");
-			exit(EXIT_FAILURE);
-		}
-	}
-
-	memset(board, 0, sizeof(int)*width*height);
-
-	snakeToBoard(s, board, width);
-
-	if (atTurnPosition(s->head.p, width, height) == true) {
-		mlog("turn position: %s at row=%d col=%d", enumStrings[getTurnPosition(s->head.p, width, height)], s->head.p.row, s->head.p.column);
-		switch (getTurnPosition(s->head.p, width, height)) {
-			case TOPLEFT:
-				if (s->direction == LEFT) {
-					setSnakeDirection(s, DOWN);
-				} else if (s->direction == UP) {
-					setSnakeDirection(s, RIGHT);
-				}
-				break;
-			case TOPRIGHT:
-				if (s->direction == RIGHT) {
-					setSnakeDirection(s, DOWN);
-				} else if (s->direction == UP) {
-					setSnakeDirection(s, LEFT);
-				}
-				break;
-			case BOTTOMLEFT:
-				if (s->direction == LEFT) {
-					setSnakeDirection(s, UP);
-				} else if (s->direction == DOWN) {
-					setSnakeDirection(s, RIGHT);
-				}
-				break;
-			case BOTTOMRIGHT:
-				if (s->direction == RIGHT) {
-					setSnakeDirection(s, UP);
-				} else if (s->direction == DOWN) {
-					setSnakeDirection(s, LEFT);
-				}
-				break;
-			case LWALL:
-				setSnakeDirection(s, RIGHT);
-				break;
-			case RWALL:
-				setSnakeDirection(s, LEFT);
-				break;
-			case TWALL:
-				setSnakeDirection(s, DOWN);
-				break;
-			case BWALL:
-				setSnakeDirection(s, UP);
-				break;
-		}
-	} else if (food->p.row < s->head.p.row) {
-		/* we're under the food row */
-		switch (s->direction) {
+		mlog("direction:");
+		switch (nextAction->d) {
 			case LEFT:
-			case RIGHT:
-				setSnakeDirection(s, UP);
-				break;
-			case DOWN:
-				setSnakeDirection(s, LEFT);
-				break;
-			case UP:
-				break;
-		}
-	} else if (food->p.row > s->head.p.row) {
-		/* we're above the food row */
-		switch (s->direction) {
-			case LEFT:
-			case RIGHT:
-				setSnakeDirection(s, DOWN);
-				break;
-			case UP:
-				setSnakeDirection(s, LEFT);
-				break;
-			case DOWN:
-				break;
-		}
-	} else if (food->p.column < s->head.p.column) {
-		/* we're right of the food segment */
-		switch (s->direction) {
-			case UP:
-			case DOWN:
-				setSnakeDirection(s, LEFT);
+				mlog("left");
 				break;
 			case RIGHT:
-				setSnakeDirection(s, UP);
+				mlog("right");
 				break;
-			case LEFT:
-				break;
-		}
-	} else {
-		/* we're left of the food segment */
-		switch (s->direction) {
 			case UP:
+				mlog("up");
+				break;
 			case DOWN:
-				setSnakeDirection(s, RIGHT);
-				break;
-			case LEFT:
-				setSnakeDirection(s, UP);
-				break;
-			case RIGHT:
+				mlog("down");
 				break;
 		}
+		setSnakeDirection(s, nextAction->d);
+		action *toFree = nextAction;
+		nextAction = nextAction->next;
+		free(toFree);
 	}
 }
 
 void free_ai()
 {
-	for (int i=0; i<height; i++) {
-		free(board[i]);
+}
+
+void getNewPath(Snake *s, struct Segment *food)
+{
+	Node nodes[boardWidth*boardHeight];
+
+	for (int x=0; x<boardWidth; x++) {
+		for (int y=0; y<boardHeight; y++) {
+			Node *currNode = getNodeAt(x, y, nodes, boardHeight);
+			currNode->penetrable = true;
+		}
 	}
-	free(board);
+
+	/* mark the snake's body as inpenetrable */
+	struct Segment *currSeg;
+	TAILQ_FOREACH(currSeg, s->body, segments) {
+		int x = currSeg->p.column;
+		int y = currSeg->p.row;
+
+		Node *currNode = getNodeAt(x, y, nodes, boardHeight);
+		currNode->penetrable = false;
+	}
+
+	mlog("getPath(...)");
+
+	Node *goal = getPath(s->head.p.column, s->head.p.row, food->p.column, food->p.row, nodes, boardWidth, boardHeight);
+	if (goal == NULL) {
+		mlog("goal was NULL");
+		/* there was no path */
+		return;
+	}
+
+	mlog("goal gotten");
+
+	Node *child = goal;
+	while (child != NULL) {
+		action *newAction = (action *) malloc(sizeof(action));
+		newAction->next = nextAction;
+
+		Node *parent = child->parent;
+
+		newAction->d = getDirection(child, parent);
+		nextAction = newAction;
+
+		child = child->parent;
+	}
+	
+	return;
+}
+
+enum Directions getDirection(Node *child, Node *parent)
+{
+	if (parent->x > child->x) {
+		/* parent is right */
+		return RIGHT;
+	} else if (parent->x < child->x) {
+		/* parent is left */
+		return LEFT;
+	} else if (parent->y < child->y) {
+		/* parent is above */
+		return UP;
+	} else {
+		return DOWN;
+	}
 }

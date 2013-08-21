@@ -13,3 +13,9 @@ valgrind.log
 snake.log
 html/*
 *.P
+a.out
+astar.txt
+bheapTest
+highscore.c.orig
+highscore.h.orig
+tree.h
