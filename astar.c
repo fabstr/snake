@@ -8,7 +8,7 @@ Node *getPath(int startX, int startY, int goalX, int goalY, Node nodes[],
 	start->x = startX;
 	start->y = startY;
 	start->gScore = 0;
-	start->hScore = hScore(start, goal);
+	/*start->hScore = hScore(start, goal);*/
 	start->parent = NULL;
 
 	Node *goal = getNodeAt(goalX, goalY, nodes, nrows);
