@@ -18,6 +18,9 @@ then run
 Usage
 -----
 Use the arrow keys to control the snake. Eat the food, don't run into yourself or the walls.
+
+Keys:
+ - h help
  - p Pause
  - q Quit
  - t Highscore table
