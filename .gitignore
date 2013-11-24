@@ -1,0 +1,7 @@
+*.P
+*.o
+*.d
+*.log
+snake
+sh
+*.dSYM
