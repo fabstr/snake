@@ -12,7 +12,7 @@ CFLAGS = -g -O0 -Wall
 LDLIBS = -lncurses
 
 # the c99 compiler
-#CC = gcc -std=c99
+#CC = gcc -std=c99 # on non-osx
 CC = clang
 
 # the output file
@@ -50,7 +50,7 @@ run: all
 	./$(BIN)
 
 run-valgrind: all $(BIN).dSYM
-	valgrind $(VLGDFLAGS) $(BIN)
+	valgrind $(VLGDFLAGS) ./$(BIN)
 
 tests: $(TESTBINS)
 
