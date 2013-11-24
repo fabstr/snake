@@ -47,7 +47,7 @@ int main(int argc, char **argv)
 	}
 
 	if (o.growthSpeed.set != true) {
-		mlog("setting grow speed");
+		mlog("setting grow speed to 1");
 		o.growthSpeed.argument = "1";
 		o.growthSpeed.set = true;
 	}
@@ -61,6 +61,7 @@ int main(int argc, char **argv)
 	/*b->movementSpeed = atoi(o.movementSpeed.argument);*/
 	mlog("growthspeed = %d", b->snake->growthSpeed);
 
+	/* run the gaem */
 	int toReturn = gameLoop(b);
 
 	writeHighscoreToFile(highscorePath, b->highscore);
@@ -108,8 +109,8 @@ Board* initGame(int width, int height)
 	b->foodSegment.drawingCharacter = ACS_DIAMOND;
 	b->foodSegment.color_pair = COLOR_PAIR(FOOD_COLOR);
 
+	b->snake = newSnake(b->width/2, b->height/2);
 	/* use the reset function to init the rest */
-	b->snake = NULL; /* will be set in resetGame */
 	resetGame(b);
 
 	return b;

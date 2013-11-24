@@ -74,6 +74,15 @@ void drawSnakeHead(Snake *s);
 Snake* newSnake(int y, int x);
 
 /**
+ * Create a new snake with the same growth speed as the old.
+ * @param s The old snake
+ * @param boardWidth The width of the playing board
+ * @param boardHeight The height of the playing board
+ * @return The new snake
+ */
+Snake *resetSnake(Snake *s, int boardWidth, int boardHeight);
+
+/**
  * Free a snake (from memory).
  * @param s The snake to free
  */

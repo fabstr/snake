@@ -55,12 +55,14 @@ bool hasPlayerLost(Board *b)
 
 void resetGame(Board *b)
 {
+	/* reset the snake */
+	b->snake = resetSnake(b->snake, b->width, b->height);
 	/* replace the snake */
-	if (b->snake != NULL) {
-		freeSnake(b->snake);
-	}
+	/*if (b->snake != NULL) {*/
+		/*freeSnake(b->snake);*/
+	/*}*/
 
-	b->snake = newSnake(b->height/2, b->width/2);
+	/*b->snake = newSnake(b->height/2, b->width/2);*/
 
 	/* add some food */
 	generateFood(b);

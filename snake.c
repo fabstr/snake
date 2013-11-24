@@ -82,11 +82,19 @@ Snake *newSnake(int y, int x)
 	s->previousDirection = UP;
 	s->segmentLivingTime = 0;
 	s->score = 0;
-	s->growthSpeed = 10;
+	s->growthSpeed = 1;
 
 	createHead(&s->head, y, x);
 
 	return s;
+}
+
+Snake *resetSnake(Snake *s, int boardWidth, int boardHeight)
+{
+	Snake *new = newSnake(boardHeight/2, boardWidth/2);
+	new->growthSpeed = s->growthSpeed;
+	freeSnake(s);
+	return new;
 }
 
 void freeSnake(Snake *s)
