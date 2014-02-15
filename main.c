@@ -37,7 +37,7 @@ int main(int argc, char **argv)
 		if (o.ai.set == true) {
 			mlog("ai steering");
 			b->ai = true;
-			init_ai(b->width, b->height);
+			/*init_ai(b->width, b->height);*/
 		} else {
 			mlog("local human steering");
 			b->ai = false;
@@ -252,7 +252,7 @@ int gameLoop(Board *b)
 					&GameState);
 		} else {
 			if (b->ai) {
-				getAiInput(b->snake, &b->foodSegment);
+				/*getAiInput(b->snake, &b->foodSegment);*/
 			} else {
 				/* get local from a human */
 				getLocalInput(b->snake, &GameState);
