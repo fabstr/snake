@@ -3,7 +3,6 @@
 #include "snake.h"
 #include "state.h"
 #include "protocol.h"
-#include "ai.h"
 
 #ifndef BOARD_H
 #define BOARD_H
