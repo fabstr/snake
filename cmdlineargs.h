@@ -37,6 +37,9 @@ typedef struct Options {
 
 	Option movementSpeed;
 	/**< @brief The speed the snake moves with, is 1, 2 or 3. */
+
+	Option color;
+	/**< @brief The color of the snake, is blue, yellow, red, green, yellow or white. */
 } Options;
 
 /* the default port */

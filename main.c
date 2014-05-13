@@ -10,7 +10,7 @@ int main(int argc, char **argv)
 	char *highscorePath;
 	asprintf(&highscorePath, "%s/%s", homePath, HIGHSCORE_FILE);
 
-	initNCurses();
+	initNCurses(o.color.argument);
 
 	if (COLS < 41 || LINES < 6) {
 		endwin();
@@ -122,7 +122,7 @@ Board* initGame(int width, int height, char *highscorePath)
 	return b;
 }
 
-void initNCurses()
+void initNCurses(char *snakeColor)
 {
 	/*init ncurses*/
 	initscr();
@@ -149,9 +149,23 @@ void initNCurses()
 	curs_set(0);
 
 	/* initialize the colours */
+	int bodycolor = BODY_COLOR;
+	if (snakeColor == NULL) {
+		bodycolor = BODY_COLOR;
+        } else if (strcmp(snakeColor, "red") == 0) {
+		bodycolor = COLOR_RED;
+	} else if (strcmp(snakeColor, "green") == 0) {
+		bodycolor = COLOR_GREEN;
+	} else if (strcmp(snakeColor, "blue") == 0) {
+		bodycolor = COLOR_BLUE;
+	} else if (strcmp(snakeColor, "white") == 0) {
+		bodycolor = COLOR_WHITE;
+	} else if (strcmp(snakeColor, "yellow") == 0) {
+		bodycolor = COLOR_YELLOW;
+	}
 	init_color(COLOR_BLUE, 0, 0, 999);
 	init_pair(TEXT_COLOR, COLOR_WHITE, COLOR_BLACK); /* wall/text */
-	init_pair(BODY_COLOR, COLOR_BLUE, COLOR_BLACK); /* body */
+	init_pair(BODY_COLOR, bodycolor, COLOR_BLACK); /* body */
 	init_pair(FOOD_COLOR, COLOR_GREEN, COLOR_BLACK); /* food */
 	init_pair(TEXT_INPUT, COLOR_BLACK, COLOR_WHITE); /* text input */
 	init_pair(HEAD_COLOR, COLOR_RED, COLOR_BLACK); /* text input */

@@ -11,11 +11,12 @@ Options parseOptions(int argc, char **argv)
 		{"port", required_argument, NULL, 'p'},
 		{"ai", no_argument, NULL, 'a'},
 		{"growthspeed", required_argument, NULL, 'g'},
-		{"movementspeed", required_argument, NULL, 'm'}
+		{"movementspeed", required_argument, NULL, 'm'},
+		{"color", required_argument, NULL, 'c'}
 	};
 
 	bool failure = false;
-	while ((ch = getopt_long(argc, argv, "rap:g:m:", longopts, NULL)) 
+	while ((ch = getopt_long(argc, argv, "rac:p:g:m:", longopts, NULL)) 
 			!= -1) {
 		switch (ch) {
 			case 'r':
@@ -37,6 +38,10 @@ Options parseOptions(int argc, char **argv)
 			case 'm':
 				o.movementSpeed.argument = optarg;
 				o.movementSpeed.set = true;
+				break;
+			case 'c':
+				o.color.argument = optarg;
+				o.color.set = true;
 				break;
 			case '?':
 			default:
@@ -64,6 +69,8 @@ void printHelp()
 	printf("  -a --ai run the ai\n");
 	printf("  -g --growthspeed the speed the snake grows with\n");
 	printf("  -m --movementspeed the speed the snake moves with\n");
+	printf("  -c --color the color of the snake, can be red, green, blue,"
+			" yellow or white\n");
 }
 
 void resetOptions(Options *o)
@@ -76,4 +83,6 @@ void resetOptions(Options *o)
 	o->growthSpeed.set = false;
 	o->movementSpeed.argument = NULL;
 	o->movementSpeed.set = false;
+	o->color.argument = NULL;
+	o->color.set = false;
 }

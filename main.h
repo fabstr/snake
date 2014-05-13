@@ -40,8 +40,10 @@ Board *initGame(int width, int height, char *highscorePath);
 
 /**
  * Perform inialization for ncurses.
+ * @param snakeColor The color of the snake. Can be "red", "green", "blue" or 
+ *                   "white".
  */
-void initNCurses();
+void initNCurses(char *snakeColor);
 
 /**
  * Get text input from the user.
