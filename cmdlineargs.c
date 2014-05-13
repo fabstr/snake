@@ -12,11 +12,12 @@ Options parseOptions(int argc, char **argv)
 		{"ai", no_argument, NULL, 'a'},
 		{"growthspeed", required_argument, NULL, 'g'},
 		{"movementspeed", required_argument, NULL, 'm'},
-		{"color", required_argument, NULL, 'c'}
+		{"color", required_argument, NULL, 'c'},
+		{"help", no_argument, NULL, 'h'}
 	};
 
 	bool failure = false;
-	while ((ch = getopt_long(argc, argv, "rac:p:g:m:", longopts, NULL)) 
+	while ((ch = getopt_long(argc, argv, "hrac:p:g:m:", longopts, NULL)) 
 			!= -1) {
 		switch (ch) {
 			case 'r':
@@ -42,6 +43,10 @@ Options parseOptions(int argc, char **argv)
 			case 'c':
 				o.color.argument = optarg;
 				o.color.set = true;
+				break;
+			case 'h':
+				printHelp();
+				exit(EXIT_SUCCESS);
 				break;
 			case '?':
 			default:
