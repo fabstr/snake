@@ -28,15 +28,16 @@ static int SleepingTime = 100 * 1000;
 /* set to true when the window is resized */
 /*static bool windowIsResized = false;*/
 
-char* highscorePath = "snakehighscore";
+char* HIGHSCORE_FILE = ".snakehighscore";
 
 /**
  * Initialize the board.
  * @param width The width of the playing board (in columns).
  * @param height The height of the playing board (in rows).
+ * @param highscorePath The absolute path to the highscore file.
  * @return A Board * to the initialized board.
  */
-Board *initGame(int width, int height);
+Board *initGame(int width, int height, char *highscorePath);
 
 /**
  * Perform inialization for ncurses.

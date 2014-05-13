@@ -6,6 +6,9 @@ int main(int argc, char **argv)
 
 	/* for when the window is resized */
 	/*signal(SIGWINCH, resizeBoard);*/
+	char *homePath = getenv("HOME");
+	char *highscorePath;
+	asprintf(&highscorePath, "%s/%s", homePath, HIGHSCORE_FILE);
 
 	initNCurses();
 
@@ -16,7 +19,8 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	} 
 
-	Board *b = initGame(COLS, LINES);
+
+	Board *b = initGame(COLS, LINES, highscorePath);
 	if (b == NULL) {
 		endwin();
 		fprintf(stderr, "Could not initialize the board.\n");
@@ -66,9 +70,11 @@ int main(int argc, char **argv)
 
 	writeHighscoreToFile(highscorePath, b->highscore);
 
+
 	/* memory deallocation */
 	freeSnake(b->snake);
 	freeHighscoreTable(b->highscore);
+	free(highscorePath);
 	if (b->listenConnection != NULL) {
 		freeConnection(b->listenConnection);
 	}
@@ -89,7 +95,7 @@ void setBoardWidthHeight(Board *b, int windowCols, int windowRows)
 	b->height = windowRows;
 }
 
-Board* initGame(int width, int height)
+Board* initGame(int width, int height, char *highscorePath)
 
 {
 	/* the snake board */
