@@ -141,7 +141,7 @@ int addRecordToHighscoreTable(Record *r, HighscoreTable *ht)
 		/* we need to increase the size of the records array */
 		size_t newSize = (ht->count+1)*sizeof(Record);
 
-		if ((ht->records = realloc(ht->records, newSize)) == NULL) {
+		if ((ht->records = (Record *) realloc(ht->records, newSize)) == NULL) {
 			return 1;
 		}
 	}
