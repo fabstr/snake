@@ -2,7 +2,6 @@
 #define STATE_H
 
 /*  the game states */
-typedef enum State State;
-enum State {PLAYING, PAUSED, HELP, QUIT, HIGHSCORE};
+typedef enum {PLAYING, PAUSED, HELP, QUIT, HIGHSCORE} State;
 
 #endif
