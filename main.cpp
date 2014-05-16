@@ -1,4 +1,4 @@
-#include "main.h"
+#include "main.hpp"
 
 int main(int argc, char **argv) 
 {
@@ -10,8 +10,10 @@ int main(int argc, char **argv)
 	char *highscorePath;
 	asprintf(&highscorePath, "%s/%s", homePath, HIGHSCORE_FILE);
 
+	mlog("init ncurses");
 	initNCurses(o.color.argument);
 
+	mlog("checking width");
 	if (COLS < 41 || LINES < 6) {
 		endwin();
 		fprintf(stderr, "The terminal window needs to be at least 41");
@@ -19,8 +21,15 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	} 
 
+	mlog("reading cmdlineargs");
+	int growthSpeed = 1; //atoi(o.growthSpeed.argument);
+	int movementSpeed = 1; //atoi(o.movementSpeed.argument);
 
-	Board *b = initGame(COLS, LINES, highscorePath);
+	// create the board for the correct window size and highscore file
+	string path = string(highscorePath);
+	mlog("new board");
+	Board *b = new Board(COLS, LINES, &path, growthSpeed, movementSpeed);
+
 	if (b == NULL) {
 		endwin();
 		fprintf(stderr, "Could not initialize the board.\n");
@@ -29,24 +38,25 @@ int main(int argc, char **argv)
 
 	if (o.remote.set == true) {
 		mlog("opening connection at %s", o.port.argument);
-		b->listenConnection = openListenConnection(o.port.argument);
-		if (b->listenConnection == NULL) {
+		Connection *c = openListenConnection(o.port.argument);
+		if (c == NULL) {
 			fprintf(stderr, "Could not open socket to listen: %s",
 					strerror(errno));
 			exit(EXIT_FAILURE);
 		}
-		b->remote = true;
+		b->setListenConnection(c);
+		b->setRemote(true);
 		mlog("connection opened");
 	} else {
 		if (o.ai.set == true) {
 			mlog("ai steering");
-			b->ai = true;
+			b->setAi(true);
 			/*init_ai(b->width, b->height);*/
 		} else {
 			mlog("local human steering");
-			b->ai = false;
-			b->listenConnection = NULL;
-			b->remote = false;
+			b->setAi(false);
+			b->setListenConnection(NULL);
+			b->setRemote(false);
 		}
 	}
 
@@ -61,65 +71,20 @@ int main(int argc, char **argv)
 		o.movementSpeed.set = true;
 	}
 
-	b->snake->growthSpeed = atoi(o.growthSpeed.argument);
-	/*b->movementSpeed = atoi(o.movementSpeed.argument);*/
-	mlog("growthspeed = %d", b->snake->growthSpeed);
+
+	mlog("game loop");
 
 	/* run the gaem */
 	int toReturn = gameLoop(b);
 
-	writeHighscoreToFile(highscorePath, b->highscore);
+	b->writeHighscore(highscorePath);
 
 
 	/* memory deallocation */
-	freeSnake(b->snake);
-	freeHighscoreTable(b->highscore);
+	delete b;
 	free(highscorePath);
-	if (b->listenConnection != NULL) {
-		freeConnection(b->listenConnection);
-	}
-	free(b);
 
 	return toReturn;
-}
-
-/*void resizeBoard(int i)*/
-/*{*/
-	/*windowIsResized = true;*/
-/*}*/
-
-void setBoardWidthHeight(Board *b, int windowCols, int windowRows)
-{
-	/* set width and height */
-	b->width = windowCols;
-	b->height = windowRows;
-}
-
-Board* initGame(int width, int height, char *highscorePath)
-
-{
-	/* the snake board */
-	Board *b = (Board *) malloc(sizeof(Board));
-
-	setBoardWidthHeight(b, COLS, LINES-2);
-
-	/* load highscore */
-	if ((b->highscore = loadHighscoreFromFile(highscorePath)) == NULL) {
-		endwin();
-		printf("highscore not loaded");
-		return NULL;
-	}
-
-	/* setup the food segment */
-	b->foodSegment.type = FOOD;
-	b->foodSegment.drawingCharacter = ACS_DIAMOND;
-	b->foodSegment.color_pair = COLOR_PAIR(FOOD_COLOR);
-
-	b->snake = newSnake(b->width/2, b->height/2);
-	/* use the reset function to init the rest */
-	resetGame(b);
-
-	return b;
 }
 
 void initNCurses(char *snakeColor)
@@ -199,45 +164,48 @@ int getTextInput(char *msg, char *dest, size_t bufflen)
 
 void lose(Board *b, State *GameState)
 {
-	mlog("score: %d", b->snake->score);
+	mlog("score: %d", b->getSnake()->getScore());
 
-	/* get the lowest score, the last one in the records array */
-	int lowestScore;
-	if (b->highscore->count >= 10) {
-		lowestScore = b->highscore->records[9].score;
-	} else {
-		lowestScore = b->highscore->records[b->highscore->count-1].score;
-	}
+	// get the highscore table and the record with the lowest score
+	HighscoreTable *ht = b->getHighscore();
+	Record *lowest = ht->getLowest();
 
-	if (lowestScore < b->snake->score) {
-		/* get the name */
+	// get the player's score
+	int playerScore = b->getSnake()->getScore();
+
+	if (playerScore > lowest->getScore()) {
+		// print a dialog box 
 		char **text = (char **) malloc(3*sizeof(char **));
 		text[0] = "                    YOU LOST!                 ";
 		text[1] = "Please enter your name for the highscore list.";
 		text[2] = "           Press space to continue.           ";
-
 		drawTextWindowInMiddle(text, 3);
 		refresh();
+		free(text);
 
+		// wait for the user to press space
 		char c;
 		while ((c = getch()) != ' ') {
 			usleep(10000);
 		}
 
-		/* get the user's name */
+		// get the user's name 
 		char *name = (char *) malloc(64);
 		if (getTextInput("What's your name? ", name, 64) != 0) {
 			*GameState = QUIT;
 		}
 
-		/* the player has beaten someone, add the player to the 
-		 * highscore list */
-		Record r = {.score = b->snake->score, 
-			.timestamp = (long)time(NULL), .playerName=name};
-		insertRecordAndSort(&r, b->highscore);
+		// construct a record for the player
+		Record *r = new Record(b->getSnake()->getScore(), 
+				(long) time(NULL),
+				name);
+		b->getHighscore()->addRecord(r);
+		b->getHighscore()->sort();
+
+		// update the gamestate
 		*GameState = HIGHSCORE;
-		free(text);
 	} else {
+		// the player didn't make the top ten
 		char **text = (char **) malloc(2*sizeof(char **));
 		text[0] = "       YOU LOST!       ";
 		text[1] = "Press space to continue.";
@@ -253,11 +221,12 @@ void lose(Board *b, State *GameState)
 		free(text);
 	}
 
-	resetGame(b);
+	b->resetGame();
 }
 
 int gameLoop(Board *b) 
 {
+	mlog("starting game loop");
 	State GameState = PLAYING;
 	while (true) {
 		/* check if the window is resized */
@@ -266,28 +235,33 @@ int gameLoop(Board *b)
 			/*setBoardWidthHeight(b, COLS, LINES-2);*/
 		/*}*/
 
-		if (b->remote == true) {
+		if (b->getRemote()== true) {
 			/* listen for an INPUT message */
-			getNetworkInput(b->snake, b->listenConnection, 
+			b->getSnake()->getNetworkInput(b->getListenConnection(),
 					&GameState);
 		} else {
-			if (b->ai) {
+			if (b->getAi()) {
 				/*getAiInput(b->snake, &b->foodSegment);*/
 			} else {
 				/* get local from a human */
-				getLocalInput(b->snake, &GameState);
+				b->getSnake()->getLocalInput(&GameState);
 			}
 		}
 
 		switch (GameState) {
 		case PLAYING:
-			/* update the game */
-			update(b);
+
 			/* check if the player has lost, this function
 			 * also handles the food */
-			if (hasPlayerLost(b) == true) {
+			if (b->hasPlayerLost() == true) {
+				mlog("player has lost");
 				lose(b, &GameState);
 			}
+
+			/* update the game */
+			mlog("updating game");
+			b->update();
+
 			break;
 		case QUIT:
 			endwin();
@@ -297,10 +271,7 @@ int gameLoop(Board *b)
 
 		}
 
-		if (draw(b, &GameState) != 0) {
-			/* there was an error */
-			return 1;
-		}
+		b->draw(&GameState);
 
 		/* wait */
 		usleep(SleepingTime);

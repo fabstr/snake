@@ -1,10 +1,11 @@
-#include <stdio.h>
-#include <stdbool.h>
-#include "highscore.h"
-#include "testing.h"
-
 #ifndef HIGHSCORE_TEST_H
 #define HIGHSCORE_TEST_H
+
+#include <stdio.h>
+#include <stdbool.h>
+#include "highscore.hpp"
+#include "testing.h"
+
 
 void testMetadata(bool showPassedTests);
 void testRecord(bool showPassedTests);

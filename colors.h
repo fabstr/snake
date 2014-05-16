@@ -1,7 +1,7 @@
-#include <curses.h>
-
 #ifndef COLORS_H
 #define COLORS_H
+
+#include <curses.h>
 
 #define TEXT_COLOR 1
 #define BODY_COLOR 2

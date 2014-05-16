@@ -1,7 +1,8 @@
-#include <stdbool.h>
-
 #ifndef POSITION_H
 #define POSITION_H
+
+#include <stdbool.h>
+
 
 /**
  * A position with column/row coordinates.

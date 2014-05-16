@@ -1,12 +1,12 @@
+#ifndef CMDLINEARGS_H
+#define CMDLINEARGS_H
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <getopt.h>
 #include <stdbool.h>
-
 #include "mlog.h"
 
-#ifndef CMDLINEARGS_H
-#define CMDLINEARGS_H
 
 /**
  * A command line option.

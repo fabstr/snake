@@ -1,3 +1,6 @@
+#ifndef MAIN_H
+#define MAIN_H
+
 #define _WITH_GETLINE
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,17 +11,15 @@
 #include <string.h>
 #include <signal.h>
 
-#include "highscore.h"
-#include "snake.h"
+#include "highscore.hpp"
+#include "snake.hpp"
 #include "position.h"
-#include "segment.h"
+#include "segment.hpp"
 #include "colors.h"
-#include "draw.h"
-#include "board.h"
+#include "draw.hpp"
+#include "board.hpp"
 #include "cmdlineargs.h"
 
-#ifndef MAIN_H
-#define MAIN_H
 
 /* the time the loop sleeps between the iterations, micro seconds */
 static int SleepingTime = 100 * 1000;

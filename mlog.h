@@ -1,8 +1,8 @@
-#include <stdio.h>
-#include <time.h>
-
 #ifndef MLOG_H
 #define MLOG_H
+
+#include <stdio.h>
+#include <time.h>
 
 #define LOGFILE "snake.log"
 

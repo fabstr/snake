@@ -1,8 +1,8 @@
+#ifndef PROTOCOL_H
+#define PROTOCOL_H
 /**
  * Functions for the networking.
  */
-#ifndef PROTOCOL_H
-#define PROTOCOL_H
 
 #include <stdio.h>
 #include <stdlib.h>
