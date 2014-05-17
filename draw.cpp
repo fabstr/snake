@@ -56,13 +56,13 @@ void drawStats(int score)
 	free(helpString);
 }
 
-void drawTextWindowInMiddle(char **text, int nrows)
+void drawTextWindowInMiddle(string text[], int nrows)
 {
 	/* find the longest string */
-	int longestLength = strlen(text[0]);
-	int len = 0;
+	int longestLength = 0;
 	for (int i=0; i<nrows; i++) {
-		if ((len = strlen(text[i])) > longestLength) {
+		int len = text[i].length();
+		if (len  > longestLength) {
 			longestLength = len;
 		}
 	}
@@ -76,7 +76,7 @@ void drawTextWindowInMiddle(char **text, int nrows)
 	/* draw the text */
 	for (int i=0; i<nrows; i++) {
 		/* ypos+0 and xpos+0 is the border */
-		mvaddstr(ypos+i+1, xpos+1, text[i]);
+		mvaddstr(ypos+i+1, xpos+1, text[i].c_str());
 	}
 }
 
@@ -93,7 +93,7 @@ void drawHelp()
 	getyx(stdscr, y, x);
 	x -= longestStringLength/2 + 2;
 
-	char *text[8] = {"Press p to pause.", 
+	string text[8] = {"Press p to pause.", 
 		"Use the arrow keys or WASD to move.", 
 		"Your head looks like this: ", 
 		"Your body: + (don't eat it).", 

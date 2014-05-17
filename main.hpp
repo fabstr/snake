@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
+#include <iostream>
 
 #include "highscore.hpp"
 #include "snake.hpp"
@@ -20,6 +21,7 @@
 #include "board.hpp"
 #include "cmdlineargs.h"
 
+using namespace std;
 
 /* the time the loop sleeps between the iterations, micro seconds */
 static int SleepingTime = 100 * 1000;
@@ -28,7 +30,7 @@ static int SleepingTime = 100 * 1000;
 /* set to true when the window is resized */
 /*static bool windowIsResized = false;*/
 
-char* HIGHSCORE_FILE = ".snakehighscore";
+string highscoreFile = ".snakehighscore";
 
 /**
  * Initialize the board.
@@ -37,23 +39,24 @@ char* HIGHSCORE_FILE = ".snakehighscore";
  * @param highscorePath The absolute path to the highscore file.
  * @return A Board * to the initialized board.
  */
-Board *initGame(int width, int height, char *highscorePath);
+Board *initGame(int width, int height, string *highscorePath);
 
 /**
  * Perform inialization for ncurses.
  * @param snakeColor The color of the snake. Can be "red", "green", "blue" or 
  *                   "white".
  */
-void initNCurses(char *snakeColor);
+void initNCurses(string *snakeColor);
 
 /**
  * Get text input from the user.
  * @param msg A meessage to print before prompting.
  * @param dest A buffer of size bufflen to hold the input.
  * @param bufflen The length of the dest buffer.
- * @return true if the input was gotten successfully.
+ * @return The string.
  */
-int getTextInput(char *msg, char *dest, size_t bufflen);
+string getTextInput(string msg);
+string getTextInput(string *msg);
 
 /**
  * Called uppon reciving SIGWINCH.

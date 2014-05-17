@@ -12,7 +12,7 @@
 void drawBorder(int x1, int y1, int x2, int y2);
 
 void drawStats(int score);
-void drawTextWindowInMiddle(char **text, int nrows);
+void drawTextWindowInMiddle(string text[], int nrows);
 void drawHelp();
 void clearScreen();
 void refreshScreen();

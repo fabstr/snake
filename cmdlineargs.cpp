@@ -63,6 +63,10 @@ Options parseOptions(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
+	if (o.color.set == false) {
+		o.color.argument = (char *) "blue";
+	}
+
 	return o;
 }
 

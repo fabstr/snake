@@ -1,9 +1,9 @@
 #include "highscore.hpp"
 
-HighscoreMetadata::HighscoreMetadata(char *line)
+HighscoreMetadata::HighscoreMetadata(string *line)
 {
 	int count; 
-	if (sscanf(line, "Count=%d\n", &count) == 0) {
+	if (sscanf(line->c_str(), "Count=%d\n", &count) == 0) {
 		throw new FatalException("Highscore metadata could not be loaded.");
 	}
 
@@ -30,7 +30,8 @@ HighscoreTable::HighscoreTable(string *file)
 	/* first read the metadata (the number of records) */
 	HighscoreMetadata *metadata;
 	try {
-		metadata = new HighscoreMetadata(line);
+		string l = string(line);
+		metadata = new HighscoreMetadata(&l);
 	} catch (FatalException *e) {
 		fclose(f);
 		throw new FatalException("Could not load metadata.", e);
@@ -48,7 +49,8 @@ HighscoreTable::HighscoreTable(string *file)
 		// parse the record from the line
 		Record *r;
 		try {
-		r = new Record(line);
+			string l = string(line);
+			r = new Record(&l);
 		} catch (FatalException *e) {
 			fclose(f);
 			throw new FatalException("Could not load highscore, a line could not be loaded.", e);
@@ -65,13 +67,20 @@ HighscoreTable::HighscoreTable(string *file)
 	fclose(f);
 }
 
-Record::Record(char *line)
+Record::Record(string *line)
 {
-	playerName = (char *) malloc(64);
-	if (sscanf(line, "Score=%d Time=%ld Name=%64[0-9A-Za-z ]s\n",
-				&score, &timestamp, playerName) <= 0) {
+	char *pn = (char *) malloc(64);
+	if (pn == NULL) {
+		throw new FatalException("Could not allocate memory for player name.");
+	}
+
+	if (sscanf(line->c_str(), "Score=%d Time=%ld Name=%64[0-9A-Za-z ]s\n",
+				&score, &timestamp, pn) <= 0) {
+		free(pn);
 		throw new FatalException("Could not load highscore line.");
 	}
+	free(pn);
+	playerName = new string(pn);
 }
 
 Record::~Record()
@@ -93,7 +102,7 @@ string *Record::toString()
 {
 	char *line;
 	if (asprintf(&line, "Score=%d Time=%ld Name=%s", score, 
-				timestamp, playerName) == -1) {
+				timestamp, playerName->c_str()) == -1) {
 		return NULL;
 	}
 
@@ -111,9 +120,9 @@ void Record::writeRecord(FILE *f)
 	delete line;
 }
 
-void HighscoreTable::writeHighscoreTable(char *file)
+void HighscoreTable::writeHighscoreTable(string *file)
 {
-	FILE *f = fopen(file, "w+b");
+	FILE *f = fopen(file->c_str(), "w+b");
 
 	HighscoreMetadata m(count);
 	m.count = count;
@@ -185,7 +194,7 @@ void HighscoreTable::sort()
 	qsort(records, p, sizeof(Record *), compareRecords);
 }
 
-Record::Record(int score, long timestamp, char *playerName)
+Record::Record(int score, long timestamp, string *playerName)
 {
 	this->score = score;
 	this->timestamp = timestamp;
@@ -204,35 +213,43 @@ Record *HighscoreTable::getLowest()
 
 void HighscoreTable::draw()
 {
+	mlog("drawing highscore");
+
 	/* the number of lines to draw */
 	int nlines = nlines = count+1;
 	if (nlines > 11) {
 		nlines = 11;
 	}
 
+	mlog("have %d lines", nlines);
+
 	/* make the array for printing */
-	char **text = (char **) malloc(nlines*sizeof(char **));
+	string *text = new string[nlines];
 	text[0] = "Top 10 (press t to continue):";
 
 	for (int i=0; i<count && i < 10; i++) {
 		Record *currRec = records[i];
 
 		/* in the text array we begin at index 1 */
-		asprintf(&text[i+1], "%2d. %4d %s", i+1, currRec->getScore(),
-				currRec->getName());
+		char *line; 
+		asprintf(&line, "%2d. %4d %s", i+1, currRec->getScore(),
+				currRec->getName()->c_str());
+		text[i] = string(line);
+		mlog("adding line %s", line);
+		free(line);
 	}
 
 	/* draw the text */
 	drawTextWindowInMiddle(text, nlines);
 
 	/* free the strings */
-	for (int i=1; i<nlines; i++) {
-		free(text[i]);
-	}
+	mlog("deleting text");
+	delete[] text;
+	mlog("done drawing highscore");
 
 }
 
-char *Record::getName()
+string *Record::getName()
 {
 	return playerName;
 }

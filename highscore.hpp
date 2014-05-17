@@ -15,7 +15,7 @@ class Record
 {
 	int score;
 	time_t timestamp;
-	char *playerName;
+	string *playerName;
 
 public:
 	/**
@@ -23,7 +23,7 @@ public:
 	 * Parse the line into a record.
 	 * @param line The line to parse.
 	 */
-	Record(char *line);
+	Record(string *line);
 
 	/**
 	 * Constructor.
@@ -31,7 +31,7 @@ public:
 	 * @param timestamp The time the player lost.
 	 * @param playerName The player's name.
 	 */
-	Record(int score, long timestamp, char *playerName);
+	Record(int score, long timestamp, string *playerName);
 
 	/**
 	 * Destructor.
@@ -60,7 +60,7 @@ public:
 	 * Get the name.
 	 * @return The name.
 	 */
-	char *getName();
+	string *getName();
 };
 
 class HighscoreTable 
@@ -86,7 +86,7 @@ public:
 	 * Write the highscore to a file.
 	 * @param file The path to the file to write to.
 	 */
-	void writeHighscoreTable(char *file);
+	void writeHighscoreTable(string *file);
 
 	/**
 	 * Add a record.
@@ -127,7 +127,7 @@ public:
 	 * Read the metadata from the line
 	 * @param line The line of metadata
 	 */
-	HighscoreMetadata(char *line);
+	HighscoreMetadata(string *line);
 
 	/**
 	 * Constructor.

@@ -153,7 +153,7 @@ Snake *Board::getSnake()
 	return snake;
 }
 
-void Board::writeHighscore(char *path)
+void Board::writeHighscore(string *path)
 {
 	highscore->writeHighscoreTable(path);
 }
@@ -186,13 +186,15 @@ void Board::draw(State *GameState)
 	foodSegment->draw();
 	snake->draw();
 
-	char *textarr[2];
+	string textarr[2];
 	switch (*GameState) {
 	case HELP:
 		drawHelp();
 		break;
 	case HIGHSCORE:
+		mlog("board: drawing highscore");
 		getHighscore()->draw();
+		mlog("board: done drawing highscore");
 		break;
 	case PAUSED:
 		textarr[0] = "The game is paused.";

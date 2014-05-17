@@ -142,7 +142,7 @@ public:
 	 * Write the highscore file to path.
 	 * @param path The highscore file.
 	 */
-	void writeHighscore(char *path);
+	void writeHighscore(string *path);
 
 	/**
 	 * Get the highscore table.

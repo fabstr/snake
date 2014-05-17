@@ -8,10 +8,13 @@ int main(int argc, char **argv)
 	/*signal(SIGWINCH, resizeBoard);*/
 	char *homePath = getenv("HOME");
 	char *highscorePath;
-	asprintf(&highscorePath, "%s/%s", homePath, HIGHSCORE_FILE);
+	asprintf(&highscorePath, "%s/%s", homePath, highscoreFile.c_str());
+
+	mlog("getting snake color if %s", o.color.argument);
+	string *color = new string(o.color.argument);
 
 	mlog("init ncurses");
-	initNCurses(o.color.argument);
+	initNCurses(color);
 
 	mlog("checking width");
 	if (COLS < 41 || LINES < 6) {
@@ -62,12 +65,12 @@ int main(int argc, char **argv)
 
 	if (o.growthSpeed.set != true) {
 		mlog("setting grow speed to 1");
-		o.growthSpeed.argument = "1";
+		o.growthSpeed.argument = (char *) "1";
 		o.growthSpeed.set = true;
 	}
 
 	if (o.movementSpeed.set != true) {
-		o.movementSpeed.argument = "1";
+		o.movementSpeed.argument = (char *) "1";
 		o.movementSpeed.set = true;
 	}
 
@@ -77,7 +80,8 @@ int main(int argc, char **argv)
 	/* run the gaem */
 	int toReturn = gameLoop(b);
 
-	b->writeHighscore(highscorePath);
+	string hp = string(highscorePath);
+	b->writeHighscore(&hp);
 
 
 	/* memory deallocation */
@@ -87,7 +91,7 @@ int main(int argc, char **argv)
 	return toReturn;
 }
 
-void initNCurses(char *snakeColor)
+void initNCurses(string *snakeColor)
 {
 	/*init ncurses*/
 	initscr();
@@ -117,17 +121,19 @@ void initNCurses(char *snakeColor)
 	int bodycolor = BODY_COLOR;
 	if (snakeColor == NULL) {
 		bodycolor = BODY_COLOR;
-        } else if (strcmp(snakeColor, "red") == 0) {
+
+	} else if (snakeColor->compare("red") == 0) {
 		bodycolor = COLOR_RED;
-	} else if (strcmp(snakeColor, "green") == 0) {
+	} else if (snakeColor->compare("green") == 0) {
 		bodycolor = COLOR_GREEN;
-	} else if (strcmp(snakeColor, "blue") == 0) {
+	} else if (snakeColor->compare("blue") == 0) {
 		bodycolor = COLOR_BLUE;
-	} else if (strcmp(snakeColor, "white") == 0) {
+	} else if (snakeColor->compare("white") == 0) {
 		bodycolor = COLOR_WHITE;
-	} else if (strcmp(snakeColor, "yellow") == 0) {
+	} else if (snakeColor->compare("yellow") == 0) {
 		bodycolor = COLOR_YELLOW;
 	}
+
 	init_color(COLOR_BLUE, 0, 0, 999);
 	init_pair(TEXT_COLOR, COLOR_WHITE, COLOR_BLACK); /* wall/text */
 	init_pair(BODY_COLOR, bodycolor, COLOR_BLACK); /* body */
@@ -136,30 +142,29 @@ void initNCurses(char *snakeColor)
 	init_pair(HEAD_COLOR, COLOR_RED, COLOR_BLACK); /* text input */
 }
 
-int getTextInput(char *msg, char *dest, size_t bufflen) 
+string getTextInput(string msg) 
+{
+	return getTextInput(&msg);
+}
+
+string getTextInput(string *msg)
 {
 	/* quit ncurses */
 	endwin();
 
 	/* show the message */
-	printf("%s", msg);
+	cout << msg << endl;
 	fflush(stdout);
 
 	/* get the input */
-	int toReturn = getline(&dest, &bufflen, stdin);
+	string s;
+	getline(cin, s);
 
-	/* trim the newline */
-	dest[strlen(dest)-1] = '\0';
-	
 	/* start ncurses again */
 	refresh();
 
 	/* return something */
-	if (toReturn <= 0) {
-		return 1;
-	} else {
-		return 0;
-	}
+	return s;
 }
 
 void lose(Board *b, State *GameState)
@@ -175,7 +180,7 @@ void lose(Board *b, State *GameState)
 
 	if (playerScore > lowest->getScore()) {
 		// print a dialog box 
-		char **text = (char **) malloc(3*sizeof(char **));
+		string text[3];
 		text[0] = "                    YOU LOST!                 ";
 		text[1] = "Please enter your name for the highscore list.";
 		text[2] = "           Press space to continue.           ";
@@ -190,15 +195,12 @@ void lose(Board *b, State *GameState)
 		}
 
 		// get the user's name 
-		char *name = (char *) malloc(64);
-		if (getTextInput("What's your name? ", name, 64) != 0) {
-			*GameState = QUIT;
-		}
+		string name = getTextInput("What's your name?");
 
 		// construct a record for the player
 		Record *r = new Record(b->getSnake()->getScore(), 
 				(long) time(NULL),
-				name);
+				&name);
 		b->getHighscore()->addRecord(r);
 		b->getHighscore()->sort();
 
@@ -206,7 +208,7 @@ void lose(Board *b, State *GameState)
 		*GameState = HIGHSCORE;
 	} else {
 		// the player didn't make the top ten
-		char **text = (char **) malloc(2*sizeof(char **));
+		string text[2];
 		text[0] = "       YOU LOST!       ";
 		text[1] = "Press space to continue.";
 
@@ -271,7 +273,9 @@ int gameLoop(Board *b)
 
 		}
 
+		mlog("drawing board");
 		b->draw(&GameState);
+		mlog("drawed");
 
 		/* wait */
 		usleep(SleepingTime);
