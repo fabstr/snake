@@ -18,11 +18,12 @@ runlog: clean all
 	less snake.log
 
 runvalgrind: clean all $(TARGET).dSYM
-	rm -f snake.log
 	valgrind $(VLGDFLAGS) ./$(TARGET)
 	
 %.dSYM: %
 	dsymutil $* -o $*.dSYM
 
-clean:
-	rm *.o
+clean: 
+	rm -f *.o
+	rm -f snake.log valgrind.log
+
