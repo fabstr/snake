@@ -10,7 +10,7 @@ all: $(OBJECTS)
 	$(CXX) -o $(TARGET) $(FLAGS) $(LIBS) $(OBJECTS)
 
 %.o: %.cpp
-	$(CXX) -c -o $@ $<
+	$(CXX) $(FLAGS) -c -o $@ $<
 
 runlog: clean all
 	rm -f snake.log
