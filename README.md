@@ -6,15 +6,18 @@ A simple ncurses snake game in C.
 Compiling
 ---------
 
-        $ make
+    $ make
 
 Running
 -------
-Make sure the highscore file (snakehighscore) is in the current directory, 
+Make sure the highscore file exists at $HOME/.snakehighscore with the contents
+
+    Count=0
+
 then run
 
-        $ ./snake
-        
+    $ ./snake
+
 Usage
 -----
 Use the arrow keys to control the snake. Eat the food, don't run into yourself or the walls.
