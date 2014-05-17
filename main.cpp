@@ -4,12 +4,6 @@ int main(int argc, char **argv)
 {
 	Options o = parseOptions(argc, argv);
 
-	/* for when the window is resized */
-	/*signal(SIGWINCH, resizeBoard);*/
-	char *homePath = getenv("HOME");
-	char *highscorePath;
-	asprintf(&highscorePath, "%s/%s", homePath, highscoreFile.c_str());
-
 	mlog("getting snake color if %s", o.color.argument);
 	string *color = new string(o.color.argument);
 
@@ -29,7 +23,9 @@ int main(int argc, char **argv)
 	int movementSpeed = 1; //atoi(o.movementSpeed.argument);
 
 	// create the board for the correct window size and highscore file
-	string path = string(highscorePath);
+	string path = string(getenv("HOME")) + "/" + highscoreFile;
+	mlog("highscore path at %s", path.c_str());
+
 	mlog("new board");
 	Board *b = new Board(COLS, LINES, &path, growthSpeed, movementSpeed);
 
@@ -80,13 +76,11 @@ int main(int argc, char **argv)
 	/* run the gaem */
 	int toReturn = gameLoop(b);
 
-	string hp = string(highscorePath);
-	b->writeHighscore(&hp);
+	b->writeHighscore(&path);
 
 
 	/* memory deallocation */
 	delete b;
-	free(highscorePath);
 
 	return toReturn;
 }
