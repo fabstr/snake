@@ -1,3 +1,5 @@
+hstest 
+snakehighscore
 *.P
 *.o
 *.d
@@ -6,3 +8,4 @@ snake
 sh
 *.dSYM
 .*.swp
+highscore-test.txt 
