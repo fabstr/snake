@@ -1,13 +1,24 @@
-#include "highscoreTest.h"
+#include "highscoreTest.hpp"
+
+void testRecordEqual(bool showPassedTests) 
+{
+	Record *r1 = new Record(1, 2, "3");
+	Record *r2 = new Record(1, 2, "3");
+	if (recordEqual(r1, r2) == false) {
+		fmsg("testRecordEqual, r1 != r2");
+	} else {
+		pmsg("testRecordEqual");
+	}
+}
 
 void testMetadata(bool showPassedTests)
 {
 	/* write to file */
 	FILE *f = fopen("highscore-test.txt", "w+b");
-	HighscoreTable ht;
-	ht.count = 3;
-	writeMetadata(f, &ht);
+	HighscoreMetadata *hm = new HighscoreMetadata(3);
+	hm->writeMetadata(f);
 	fclose(f);
+	delete hm;
 
 	/* read from file  */
 	FILE *g = fopen("highscore-test.txt", "rb");
@@ -17,24 +28,26 @@ void testMetadata(bool showPassedTests)
 	fclose(g);
 
 	/* parse */
-	HighscoreMetadata hm;
-	readMetadata(line, &hm);
+	string l = string(line);
+	hm = new HighscoreMetadata(l);
 	free(line);
 
 	/* check */
-	if (hm.count != 3) {
-		fmsg("testMetadata, count != 3, is %d", hm.count);
+	if (hm->count != 3) {
+		fmsg("testMetadata, count != 3, is %d", hm->count);
 	} else {
 		pmsg("testMetadata");
 	}
+
+	delete hm;
 }
 
 void testRecord(bool showPassedTests)
 {
 	/* write the record */
 	FILE *f = fopen("highscore-test.txt", "w+b");
-	Record r = {.score=123, .timestamp=123456, .playerName="name"};
-	writeRecord(f, &r);
+	Record r = Record(123, (long) 123456, "name");
+	r.writeRecord(f);
 	fclose(f);
 
 	/* read the record */
@@ -45,28 +58,25 @@ void testRecord(bool showPassedTests)
 	fclose(g);
 
 	/* parse the record */
-	Record r2;
-	parseLine(line, &r2);
+	Record r2 = Record(string(line));
 
-	if (r2.score != r.score || r2.timestamp != r.timestamp || 
-			strcmp(r2.playerName, r.playerName) != 0) {
+	if (r2.getScore() != r.getScore() || 
+			r2.getTimestamp() != r.getTimestamp() || 
+			strcmp(r2.getName().c_str(), r.getName().c_str()) != 0) {
 		fmsg("testRecord, records differ");
 	} else {
 		pmsg("testRecord");
 	}
 
 	free(line);
-	free(r2.playerName);
-
 }
 
 void testRecordWithSpaces(bool showPassedTests)
 {
 	/* write the record */
 	FILE *f = fopen("highscore-test.txt", "w+b");
-	Record r = {.score=123, .timestamp=123456, 
-		.playerName="name and number"};
-	writeRecord(f, &r);
+	Record r = Record(123, (long) 123456, "name and number");
+	r.writeRecord(f);
 	fclose(f);
 
 	/* read the record */
@@ -77,62 +87,58 @@ void testRecordWithSpaces(bool showPassedTests)
 	fclose(g);
 
 	/* parse the record */
-	Record r2;
-	parseLine(line, &r2);
+	Record r2 = Record(string(line));
 
-	if (r2.score != r.score || r2.timestamp != r.timestamp || 
-			strcmp(r2.playerName, r.playerName) != 0) {
+	if (r2.getScore() != r.getScore() || 
+			r2.getTimestamp() != r.getTimestamp() || 
+			strcmp(r2.getName().c_str(), r.getName().c_str()) != 0) {
 		fmsg("testRecordWithSpaces, records differ");
 	} else {
 		pmsg("testRecord");
 	}
 
 	free(line);
-	free(r2.playerName);
-
 }
 
 bool recordEqual(Record *r1, Record *r2) 
 {
-	return (r1->score == r2->score && r1->timestamp == r2->timestamp &&
-			strcmp(r1->playerName, r2->playerName) == 0) == true;
+	if (r1->getScore() == r2->getScore() &&
+		r1->getTimestamp() == r2->getTimestamp() &&
+		strcmp(r1->getName().c_str(), r2->getName().c_str()) == 0) {
+		return true;
+	}
+	
+	return false;
 }
 
 void testHighscoreTable(bool showPassedTests)
 {
-	/* the highscoretable to write */
-	HighscoreTable ht;
-
 	/* create an array of records */
-	Record records[6] = {
-		[0]={.score=1, .timestamp=11, .playerName="1"},
-		[1]={.score=2, .timestamp=12, .playerName="2"},
-		[2]={.score=3, .timestamp=13, .playerName="3"},
-		[3]={.score=4, .timestamp=14, .playerName="4"},
-		[4]={.score=5, .timestamp=15, .playerName="5"},
-		[5]={.score=6, .timestamp=16, .playerName="6"}};
+	Record **records = new Record*[6];
+	records[0] = new Record(1, 11, "1");
+	records[1] = new Record(2, 12, "2");
+	records[2] = new Record(3, 13, "3");
+	records[3] = new Record(4, 14, "4");
+	records[4] = new Record(5, 15, "5");
+	records[5] = new Record(6, 16, "6");
 
-	ht.records = records;
-	ht.count = 6;
-	ht.p = 6;
+	HighscoreTable ht = HighscoreTable(records, 6, 6);
 
-	if (writeHighscoreToFile("highscore-test.txt", &ht) != 0) {
-		fmsg("testHighscoreTable, could not write highscore file.");
-	}
+	ht.writeHighscoreTable("highscore-test.txt");
 
-	HighscoreTable *ht2 = loadHighscoreFromFile("highscore-test.txt");
+	HighscoreTable ht2 = HighscoreTable("highscore-test.txt");
 
-	if (ht.count != ht2->count) {
+	if (ht.getCount() != ht2.getCount()) {
 		fmsg("testHighscoreTable, count not the same");
-		fmsg(" is %d, should be %d\n", ht2->count, ht.count);
+		fmsg(" is %d, should be %d\n", ht2.getCount(), ht.getCount());
 	} 
 
 	/* if all the records are equal, this will be true after the loop */
 	bool recordsEqual = true;
 
 	/* compare the records */
-	for (int i=0; i<ht.count; i++) {
-		if (recordEqual(&ht.records[i], &ht2->records[i]) != true) {
+	for (int i=0; i<ht.getCount(); i++) {
+		if (recordEqual(ht.getRecords()[i], ht2.getRecords()[i]) != true) {
 			fmsg("testHighscoreTable, records differ");
 			recordsEqual = false;
 		}
@@ -141,66 +147,53 @@ void testHighscoreTable(bool showPassedTests)
 	if (recordsEqual == true) {
 		pmsg("testHighscoreTable");
 	}
-
-	freeHighscoreTable(ht2);
 }
 
 void testAddRecord(bool showPassedTests)
 {
-	HighscoreTable ht;
+	Record **arr = new Record*[2];
+	arr[0] = new Record(1, 11, "1");
+	arr[1] = new Record(2, 12, "1");
+	
+	HighscoreTable ht = HighscoreTable(arr, 2, 2);
 
-	ht.records = (Record *) malloc(sizeof(Record)*2);
-	Record r1 = {.score=1, .timestamp=11, .playerName="1"};
-	Record r2 = {.score=2, .timestamp=12, .playerName="2"};
-	ht.records[0] = r1;
-	ht.records[1] = r2;
+	Record *r = new Record(3, 13, "3");
 
-	ht.count = 2;
-	ht.p = 2;
-
-	Record r = {.score=3, .timestamp=13, .playerName="3"};
-
-	if (addRecordToHighscoreTable(&r, &ht) != 0) {
-		fmsg("testAddRecord, could not add record\n");
+	ht.addRecord(r);
+	if (recordEqual(r, ht.getRecords()[2]) != true) {
+		fmsg("testAddRecord, records differ");
 	} else {
-		if (recordEqual(&r, &ht.records[2]) != true) {
-			fmsg("testAddRecord, records differ");
-		} else {
-			pmsg("testAddRecord");
-		}
+		pmsg("testAddRecord");
 	}
-
-	free(ht.records);
 }
 
 void testInsertRecord(bool showPassedTests) 
 {
-	HighscoreTable ht;
 
-	Record r1 = {.score=2, .timestamp=11, .playerName="1"};
-	Record r2 = {.score=1, .timestamp=12, .playerName="2"};
-	Record r3 = {.score=12, .timestamp=13, .playerName="3"};
+	Record *r1 = new Record(2, 11, "1");
+	Record *r2 = new Record(1, 12, "2");
+	Record *r3 = new Record(12, 13, "3");
 
-	ht.records = (Record *) malloc(sizeof(Record)*2);
-	ht.records[0] = r1;
-	ht.records[1] = r2;
+	Record **arr = new Record*[2];
+	arr[0] = r1;
+	arr[1] = r2;
+	HighscoreTable ht = HighscoreTable(arr, 2, 2);
 
-	ht.count = 2;
-	ht.p = 2;
+	ht.addRecord(r3);
+	ht.sort();
 
-	insertRecordAndSort(&r3, &ht);
-
-	if (recordEqual(&r3, &ht.records[0]) == false ||
-			recordEqual(&r1, &ht.records[1]) == false ||
-			recordEqual(&r2, &ht.records[2]) == false) {
-		fmsg("testInsertRecord, records not sorted");
+	Record **r = ht.getRecords();
+	if (recordEqual(r3, r[0]) == false) {
+		fmsg("testInsertRecord, records not sorted, r3 isn't first");
+	} else if (recordEqual(r2, r[1]) == false) {
+		fmsg("testInsertRecord, records not sorted, r2 isn't second");
+	} else if (recordEqual(r1, r[2]) == false) {
+		fmsg("testInsertRecord, records not sorted, r1 isn't last");
 	} else {
 		pmsg("testInsertRecord");
 	}
-
-	free(ht.records);
-
 }
+
 int main(int argc, char **argv)
 {
 	bool showPassedTests = false;
@@ -212,6 +205,7 @@ int main(int argc, char **argv)
 		}
 	}
 
+	testRecordEqual(showPassedTests);
 	testMetadata(showPassedTests);
 	testRecord(showPassedTests);
 	testHighscoreTable(showPassedTests);

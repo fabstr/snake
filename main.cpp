@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 	mlog("highscore path at %s", path.c_str());
 
 	mlog("new board");
-	Board *b = new Board(COLS, LINES, &path, growthSpeed, movementSpeed);
+	Board *b = new Board(COLS, LINES, path, growthSpeed, movementSpeed);
 
 	if (b == NULL) {
 		endwin();
@@ -76,7 +76,7 @@ int main(int argc, char **argv)
 	/* run the gaem */
 	int toReturn = gameLoop(b);
 
-	b->writeHighscore(&path);
+	b->writeHighscore(path);
 
 
 	/* memory deallocation */
@@ -194,7 +194,7 @@ void lose(Board *b, State *GameState)
 		// construct a record for the player
 		Record *r = new Record(b->getSnake()->getScore(), 
 				(long) time(NULL),
-				&name);
+				name);
 		b->getHighscore()->addRecord(r);
 		b->getHighscore()->sort();
 

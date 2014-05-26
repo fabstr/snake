@@ -92,7 +92,7 @@ int Board::getHeight()
 	return height;
 }
 
-Board::Board(int w, int h, string *highscorePath, int growthSpeed, 
+Board::Board(int w, int h, string highscorePath, int growthSpeed, 
 	int movementSpeed)
 {
 	// set width and height
@@ -153,7 +153,7 @@ Snake *Board::getSnake()
 	return snake;
 }
 
-void Board::writeHighscore(string *path)
+void Board::writeHighscore(string path)
 {
 	highscore->writeHighscoreTable(path);
 }

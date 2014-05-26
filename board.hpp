@@ -104,7 +104,7 @@ public:
 	 * @param growthSpeed The growth speed of the snake
 	 * @param movementSpeed The movement speed of the snake
 	 */
-	Board(int w, int h, string *highscorePath, int growthSpeed, 
+	Board(int w, int h, string highscorePath, int growthSpeed, 
 			int movementSpeed);
 
 	/**
@@ -142,7 +142,7 @@ public:
 	 * Write the highscore file to path.
 	 * @param path The highscore file.
 	 */
-	void writeHighscore(string *path);
+	void writeHighscore(string path);
 
 	/**
 	 * Get the highscore table.

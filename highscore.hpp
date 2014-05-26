@@ -6,62 +6,11 @@
 #include <string>
 #include "draw.hpp"
 #include "FatalException.hpp"
+#include "highscoreMetadata.hpp"
+#include "record.hpp"
 
 #ifndef HIGHSCORE_H
 #define HIGHSCORE_H
-
-
-class Record 
-{
-	int score;
-	time_t timestamp;
-	string *playerName;
-
-public:
-	/**
-	 * Constructor.
-	 * Parse the line into a record.
-	 * @param line The line to parse.
-	 */
-	Record(string *line);
-
-	/**
-	 * Constructor.
-	 * @param score The player's score.
-	 * @param timestamp The time the player lost.
-	 * @param playerName The player's name.
-	 */
-	Record(int score, long timestamp, string *playerName);
-
-	/**
-	 * Destructor.
-	 */
-	~Record();
-
-	/**
-	 * Write the record to a file.
-	 * @param f The file to write to.
-	 */
-	void writeRecord(FILE *f);
-
-	/**
-	 * Return the record as a string that can be read by the constructor.
-	 * @return The string.
-	 */
-	string *toString();
-
-	/**
-	 * Get the score.
-	 * @return The score.
-	 */
-	int getScore();
-
-	/**
-	 * Get the name.
-	 * @return The name.
-	 */
-	string *getName();
-};
 
 class HighscoreTable 
 {
@@ -75,7 +24,16 @@ public:
 	 * Load the highscore from the given file.
 	 * @param file The file to load from.
 	 */
-	HighscoreTable(string *file);
+	HighscoreTable(string file);
+
+	/**
+	 * Constructor.
+	 * The caller is responsible for the loading of the highscore table.
+	 * @param records
+	 * @param count
+	 * @param p
+	 */
+	HighscoreTable(Record **records, int count, int p);
 
 	/**
 	 * Destructor.
@@ -86,7 +44,7 @@ public:
 	 * Write the highscore to a file.
 	 * @param file The path to the file to write to.
 	 */
-	void writeHighscoreTable(string *file);
+	void writeHighscoreTable(string file);
 
 	/**
 	 * Add a record.
@@ -115,32 +73,11 @@ public:
 	 * Draw the highscore table on screen.
 	 */
 	void draw();
-};
-
-class HighscoreMetadata 
-{
-public:
-	int count;
 
 	/**
-	 * Constructor.
-	 * Read the metadata from the line
-	 * @param line The line of metadata
+	 * Return the array of records.
 	 */
-	HighscoreMetadata(string *line);
-
-	/**
-	 * Constructor.
-	 * Set the count from a parameter.
-	 * @param c The count.
-	 */
-	HighscoreMetadata(int c);
-
-	/**
-	 * Write the metadata to a file.
-	 * @param f The file to write to.
-	 */
-	int writeMetadata(FILE *f);
+	Record **getRecords();
 };
 
 /**
