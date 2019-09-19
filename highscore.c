@@ -17,8 +17,16 @@ HighscoreTable *loadHighscoreFromFile(char *file)
 {
 	mlog("opening %s\n", file);
 
+	FILE *f;
+	if (access(file, F_OK) == -1) {
+		/* the file does not exist */
+		f = fopen(file, "w+b");
+	} else {
+		/* the file exists */
+		f = fopen(file, "rb");
+	}
+
 	/* open the highscore file */
-	FILE *f = fopen(file, "rb");
 	if (f == NULL) {
 		return NULL;
 	}

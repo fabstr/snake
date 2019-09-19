@@ -3,6 +3,7 @@
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #ifndef HIGHSCORE_H
 #define HIGHSCORE_H
