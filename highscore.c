@@ -1,4 +1,5 @@
 #include "highscore.h"
+#include "mlog.h"
 
 int readMetadata(char *line, HighscoreMetadata *metadata) 
 {
@@ -14,8 +15,13 @@ int readMetadata(char *line, HighscoreMetadata *metadata)
 
 HighscoreTable *loadHighscoreFromFile(char *file) 
 {
+	mlog("opening %s\n", file);
+
 	/* open the highscore file */
 	FILE *f = fopen(file, "rb");
+	if (f == NULL) {
+		return NULL;
+	}
 
 	/* to hold a line of the file */
 	char *line = NULL;
@@ -86,8 +92,8 @@ int writeMetadata(FILE *f, HighscoreTable *ht)
 
 char *getRecordLine(Record *r)
 {
-	char *line;
-	if (asprintf(&line, "Score=%d Time=%ld Name=%s", r->score, 
+	char *line = malloc(1024);
+	if (snprintf(line, 1024, "Score=%d Time=%ld Name=%s", r->score, 
 				r->timestamp, r->playerName) == -1) {
 		return NULL;
 	}

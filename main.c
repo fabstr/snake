@@ -7,8 +7,8 @@ int main(int argc, char **argv)
 	/* for when the window is resized */
 	/*signal(SIGWINCH, resizeBoard);*/
 	char *homePath = getenv("HOME");
-	char *highscorePath;
-	asprintf(&highscorePath, "%s/%s", homePath, HIGHSCORE_FILE);
+	char *highscorePath = malloc(1024);
+	snprintf(highscorePath, 1024, "%s/%s", homePath, HIGHSCORE_FILE);
 
 	initNCurses(o.color.argument);
 

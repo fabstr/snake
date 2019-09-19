@@ -7,10 +7,11 @@
 #define LOGFILE "snake.log"
 
 #define mlog(...) {\
-	char *logline = NULL; \
-	asprintf(&logline, __VA_ARGS__); \
+	char *logline = malloc(1024); \
+	snprintf(logline, 1024, __VA_ARGS__); \
 	write_log(logline); \
-	free(logline); }
+	free(logline); \
+}
 
 void write_log(char *msg);
 

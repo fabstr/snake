@@ -35,9 +35,10 @@ void drawBorder(int col1, int row1, int col2, int row2)
 void drawStats(Board *b)
 {
 	int score = b->snake->score;
-	char *scoreString, *helpString;
-	asprintf(&scoreString, "Score: %10d ", score);
-	asprintf(&helpString, " Press h for help.");
+	char *scoreString = malloc(1024);
+	char *helpString = malloc(1024);
+	snprintf(scoreString, 1024, "Score: %10d ", score);
+	snprintf(helpString, 1024, " Press h for help.");
 
 	mvaddstr(LINES-2, 2, scoreString);
 
@@ -104,7 +105,8 @@ void drawHighscore(Board *b)
 		Record currRec = b->highscore->records[i];
 
 		/* in the text array we begin at index 1 */
-		asprintf(&text[i+1], "%2d. %4d %s", i+1, currRec.score, 
+		text[i+1] = malloc(1024);
+		snprintf(text[i+1], 1024, "%2d. %4d %s", i+1, currRec.score, 
 				currRec.playerName);
 	}
 

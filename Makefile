@@ -49,7 +49,7 @@ all: $(OBJECTS)
 run: all
 	./$(BIN)
 
-run-valgrind: all $(BIN).dSYM
+run-valgrind: all # $(BIN).dSYM
 	valgrind $(VLGDFLAGS) ./$(BIN)
 
 tests: $(TESTBINS)

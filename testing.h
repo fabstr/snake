@@ -12,8 +12,8 @@
  */
 #define pmsg(...) { \
 	if (showPassedTests == true) { \
-		char *msgline = NULL; \
-		asprintf(&msgline, __VA_ARGS__); \
+		char *msgline = malloc(1024); \
+		snprintf(msgline, 1024, __VA_ARGS__); \
 		printf("PASS: %s\n", msgline); \
 		free(msgline); }} 
 
@@ -22,8 +22,8 @@
  * @param Something to put in printf
  */
 #define fmsg(...) { \
-	char *msgline = NULL; \
-	asprintf(&msgline, __VA_ARGS__); \
+	char *msgline = malloc(1024); \
+	snprintf(&msgline, 1024, __VA_ARGS__); \
 	fprintf(stderr, "TEST FAILURE: %s\n", msgline); \
 	free(msgline); }
 
